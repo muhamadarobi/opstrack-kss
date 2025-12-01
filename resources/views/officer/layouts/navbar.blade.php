@@ -2,7 +2,9 @@
 <div class="navbar d-flex justify-content-between align-items-center align-self-stretch">
     <!-- Kiri: Logo & Info User -->
     <div class="navbar-left d-flex align-items-center">
-        <img src="{{ asset('assets/KSS.png') }}" alt="KSS" style="height: 35px;">
+        <a href="{{ route('reports.history') }}">
+            <img src="{{ asset('assets/KSS.png') }}" alt="KSS" style="height: 35px;">
+        </a>
         <div class="akun-title d-flex flex-column align-items-start">
             {{-- LOGIKA GREETING SESUAI WAKTU (WITA / GMT+8) --}}
             @php

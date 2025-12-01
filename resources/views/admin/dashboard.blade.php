@@ -5,7 +5,7 @@
 @section('content')
     <div class="content-page d-flex flex-column align-items-center justify-content-center align-self-stretch" style="padding: 0px 25px 25px 25px; gap: 10px;">
 
-        <h1 class="title-page align-self-stretch"">Dashboard Dokumen Masuk</h1>
+        <h1 class="title-page align-self-stretch">Dashboard Dokumen Masuk</h1>
 
         <div class="dashboard d-flex flex-column align-items-start align-self-stretch" style="gap: 30px;">
 
@@ -82,7 +82,8 @@
                             <div class="detail-notif d-flex flex-column align-items-start" style="gap: 15px;">
                                 <div class="info-notif d-flex flex-column align-items-start align-self-stretch" style="gap: 2px;">
                                     <div class="document-notif d-flex align-items-center" style="gap: 6px; font-size: 14px;">
-                                        <span class="nama fw-bold">{{ $report->user->name ?? 'Petugas' }}</span>
+                                        <!-- MODIFIKASI: Menampilkan Group Name alih-alih User Name -->
+                                        <span class="nama fw-bold">Group {{ $report->group_name }}</span>
                                         <span>Mengunggah</span>
                                         <span class="document-name fw-bold" style="color: var(--blue-kss);">Laporan Harian Shift</span>
 

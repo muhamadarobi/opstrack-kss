@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KSS - Document Management System</title>
+    <title>KSS - Opstrack</title>
     <link rel="icon" href="{{ asset('assets/Logo-compressed 1.png') }}">
 
     <!-- CDN Bootstrap -->

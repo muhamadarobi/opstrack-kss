@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>@yield('title', 'KSS - Integrated Daily Report')</title>
+    <title>KSS - @yield('title')</title>
     <!-- Icon Placeholder -->
-    <link rel="icon" href="https://placehold.co/32x32/0077C2/FFFFFF?text=KSS">
+    <link rel="icon" href="{{ asset('assets/Logo-compressed 1.png') }}">
 
     <!-- CDN Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
@@ -446,7 +446,7 @@
             border-top: 1px solid var(--border-color) !important;
         }
 
-        .flatpickr-time input { font-size: 20px !important; font-weight: bold !important; }
+        .flatpickr-time input { font-size: 14px !important; font-weight: bold !important; }
         .flatpickr-time .flatpickr-am-pm { font-size: 18px !important; }
 
         .flatpickr-calendar .flatpickr-month { background: transparent !important; color: var(--text-main) !important; fill: var(--text-main) !important; margin-bottom: 10px !important; height: 50px !important; }
@@ -460,7 +460,7 @@
             margin-top: 2px !important;
             height: 42px !important;
             line-height: 42px !important;
-            font-size: 16px !important;
+            font-size: 14px !important;
         }
 
         .flatpickr-calendar .flatpickr-day:hover { background-color: var(--hover-bg) !important; color: var(--blue-kss) !important; }

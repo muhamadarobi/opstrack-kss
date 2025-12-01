@@ -85,7 +85,7 @@
                         <div class="input-material-info d-flex flex-column align-items-start align-self-stretch" style="gap: 6px; flex: 1 0 0; min-width: 200px;">
                             <label>Jam Kerja</label>
                             <!-- Change Name to match controller -->
-                            <input type="text" name="material_working_hours" class="form-control arrival-time-picker" placeholder="00:00 - 00:00">
+                            <input type="text" name="material_working_hours" class="form-control flatpickr-time-only" placeholder="00:00">
                         </div>
                     </div>
                 </div>

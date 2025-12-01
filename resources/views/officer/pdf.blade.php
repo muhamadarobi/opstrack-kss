@@ -3,16 +3,17 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Laporan Harian Shift</title>
+    <link rel="icon" href="{{ public_path('assets/Logo-compressed 1.png') }}">
     <style>
         @page {
-            /* Legal Size: 21.59cm x 35.56cm (Standard Legal) */
+            /* Legal Size: 21.59cm x 35.56cm */
             size: 21.59cm 35.56cm;
-            /* Margin tetap tipis */
             margin: 0.5cm;
         }
         body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 6pt;
+            /* UPDATED: Naik 1pt jadi 7pt */
+            font-size: 7pt;
             line-height: 1.1;
             color: #000;
         }
@@ -33,27 +34,20 @@
         .w-100 { width: 100%; }
         .w-50 { width: 50%; }
         .w-33 { width: 33.33%; }
-        .w-60 { width: 60%; }
-        .w-40 { width: 40%; }
 
         /* Borders */
         .border-all { border: 0.5px solid black; }
-        .table-bordered th, .table-bordered td {
-            border: 0.5px solid black;
-        }
+        .table-bordered th, .table-bordered td { border: 0.5px solid black; }
         .border-top { border-top: 0.5px solid black; }
         .border-bottom { border-bottom: 0.5px solid black; }
         .border-left { border-left: 0.5px solid black; }
         .border-right { border-right: 0.5px solid black; }
         .no-border { border: none !important; }
-        .no-border-top { border-top: none !important; }
-        .no-border-bottom { border-bottom: none !important; }
-        .no-border-left { border-left: none !important; }
-        .no-border-right { border-right: none !important; }
 
-        /* Specific Styles */
+        /* Styles */
         .header-title {
-            font-size: 10pt;
+            /* UPDATED: Naik jadi 11pt */
+            font-size: 11pt;
             font-weight: bold;
             text-align: center;
             text-transform: uppercase;
@@ -65,7 +59,8 @@
             font-weight: bold;
             margin-top: 8px;
             margin-bottom: 3px;
-            font-size: 7pt;
+            /* UPDATED: Naik jadi 8pt */
+            font-size: 8pt;
             text-transform: uppercase;
             background-color: #e0e0e0;
             padding: 2px 4px;
@@ -73,69 +68,83 @@
         }
         .bg-gray { background-color: #f0f0f0; }
 
-        /* Helper for Layout */
+        /* Layout Helpers */
         .label-col { width: 70px; }
         .sep-col { width: 5px; text-align: center; }
         .val-col { border-bottom: 0.5px dotted #000; }
-
-        .activity-box {
-            border: 0.5px solid black;
-            margin-bottom: 6px;
-            page-break-inside: avoid;
-        }
-
-        .section-container {
-            page-break-inside: avoid;
-        }
-
+        .activity-box { border: 0.5px solid black; margin-bottom: 6px; page-break-inside: avoid; }
+        .section-container { page-break-inside: avoid; }
         .page-break { page-break-after: always; }
-
-        .tiny-text { font-size: 5pt; }
-
-        /* Row Height Consistency */
+        /* UPDATED: Naik jadi 6pt */
+        .tiny-text { font-size: 6pt; }
         .row-empty { height: 10px; }
-
         .text-green { color: #008000; font-weight: bold; }
         .text-red { color: #FF0000; font-weight: bold; }
 
-        /* Logo Placeholder Style */
-        .logo-placeholder {
-            width: 60px; /* Lebar Logo */
-            height: auto;
-            margin-bottom: 5px;
+        /* Logo Style */
+        .logo-img {
+            height: 50px; /* Sesuaikan tinggi agar pas sejajar */
+            width: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* --- NEW: Signature Image Style --- */
+        .signature-box {
+            height: 70px; /* Tinggi tetap agar layout tidak bergeser */
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px 0;
+        }
+        .signature-img {
+            height: 100%; /* Mengikuti tinggi signature-box */
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
         }
     </style>
 </head>
 <body>
 
-    <!-- HEADER -->
+    <!-- HEADER INFO: 3 KOLOM SEJAJAR -->
     <table class="w-100 no-border" style="margin-bottom: 5px;">
         <tr>
-            <td style="width: 60%; vertical-align: top;">
+            <!-- KIRI: KEPADA YTH (40%) -->
+            <td style="width: 40%; vertical-align: top;">
                 <div style="margin-bottom: 2px;">Kepada Yth,</div>
-                <div class="text-bold" style="font-size: 8pt;">Bapak Direktur</div>
-                <div class="text-bold" style="font-size: 8pt;">PT. Kaltim Satria Samudera</div>
+                <!-- UPDATED: Font size inline jadi 9pt -->
+                <div class="text-bold" style="font-size: 9pt;">Bapak Direktur</div>
+                <div class="text-bold" style="font-size: 9pt;">PT. Kaltim Satria Samudera</div>
                 <div>di- Bontang</div>
             </td>
-            <!-- UPDATED: Info Umum diperkecil lebarnya -->
+
+            <!-- TENGAH: LOGO (20%) -->
+            <td style="width: 20%; vertical-align: top; text-align: center;">
+                <img src="{{ public_path('assets/Logo-compressed 1.png') }}" alt="Logo KSS" class="logo-img">
+            </td>
+
+            <!-- KANAN: INFO UMUM (40%) -->
             <td style="width: 40%; vertical-align: top;">
-                <table class="no-border">
-                    <tr><td style="width: 60px;">Hari</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ \Carbon\Carbon::parse($report->report_date)->locale('id')->translatedFormat('l') }}</td></tr>
-                    <tr><td>Tanggal</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ \Carbon\Carbon::parse($report->report_date)->locale('id')->translatedFormat('d F Y') }}</td></tr>
-                    <tr><td>Jam Kerja</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ $report->time_range }}</td></tr>
-                    <tr><td>Shift</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ $report->shift }}</td></tr>
-                    <tr><td>Group</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ $report->group_name }}</td></tr>
+                <table class="no-border" align="right">
+                    <tr><td class="text-right" style="width: 60px;">Hari</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ \Carbon\Carbon::parse($report->report_date)->locale('id')->translatedFormat('l') }}</td></tr>
+                    <tr><td class="text-right">Tanggal</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ \Carbon\Carbon::parse($report->report_date)->locale('id')->translatedFormat('d F Y') }}</td></tr>
+                    <tr><td class="text-right">Jam Kerja</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ $report->time_range }}</td></tr>
+                    <tr><td class="text-right">Shift</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ $report->shift }}</td></tr>
+                    <tr><td class="text-right">Group</td><td class="sep-col">:</td><td class="border-bottom" style="width: 90px;">{{ $report->group_name }}</td></tr>
                 </table>
             </td>
         </tr>
     </table>
 
+    <!-- JUDUL LAPORAN -->
     <div class="header-title">LAPORAN SHIFT HARIAN</div>
 
     <!-- I. PEMUATAN PUPUK KANTONG -->
     <div class="section-header">I. PEMUATAN PUPUK KANTONG</div>
 
-    @for($i = 1; $i <= 4; $i++)
+    @for($i = 1; $i <= 5; $i++)
         @php $activity = $report->loadingActivities->where('sequence', $i)->first(); @endphp
         <div class="activity-box">
             <!-- INFO ATAS -->
@@ -189,7 +198,8 @@
                 </tr>
             </table>
             <!-- TIME SHEET & PETUGAS -->
-            <div class="text-center border-top border-bottom bg-gray text-bold" style="padding: 1px; font-size: 6pt;">TIME SHEET</div>
+            <!-- UPDATED: Font size jadi 7pt -->
+            <div class="text-center border-top border-bottom bg-gray text-bold" style="padding: 1px; font-size: 7pt;">TIME SHEET</div>
             <table class="w-100" style="margin-bottom: 0;">
                 <tr>
                     <!-- Timesheet Pengiriman -->
@@ -205,7 +215,8 @@
                             @endfor
                         </table>
                         <!-- Petugas Kiri -->
-                        <table class="w-100 no-border" style="font-size: 6pt; border-top: 0.5px solid black;">
+                        <!-- UPDATED: Font size jadi 7pt -->
+                        <table class="w-100 no-border" style="font-size: 7pt; border-top: 0.5px solid black;">
                             <tr><td style="width: 60px;">Tally Gudang</td><td class="sep-col">:</td><td>{{ $activity->tally_warehouse ?? '' }}</td></tr>
                             <tr><td>Driver</td><td class="sep-col">:</td><td>{{ $activity->driver_name ?? '' }}</td></tr>
                             <tr><td>Truck No.</td><td class="sep-col">:</td><td>{{ $activity->truck_number ?? '' }}</td></tr>
@@ -224,7 +235,8 @@
                             @endfor
                         </table>
                         <!-- Petugas Kanan -->
-                        <table class="w-100 no-border" style="font-size: 6pt; border-top: 0.5px solid black;">
+                        <!-- UPDATED: Font size jadi 7pt -->
+                        <table class="w-100 no-border" style="font-size: 7pt; border-top: 0.5px solid black;">
                             <tr>
                                 <td style="width: 50px;">Tally Kapal</td><td class="sep-col">:</td><td style="width: 70px;">{{ $activity->tally_ship ?? '' }}</td>
                                 <td style="width: 40px;">Operator</td><td class="sep-col">:</td><td>{{ $activity->operator_ship ?? '' }}</td>
@@ -242,14 +254,15 @@
 
     <!-- II. PEMUATAN UREA CURAH -->
     <div class="section-header">II. PEMUATAN UREA CURAH</div>
-    @for($i = 1; $i <= 2; $i++)
+    @for($i = 1; $i <= 3; $i++)
         @php $bulk = $report->bulkLoadingActivities->where('sequence', $i)->first(); @endphp
         <div class="activity-box">
             <table class="w-100 no-border">
                 <tr>
                     <td style="width: 50%; vertical-align: top; border-right: 0.5px solid black; padding: 2px;">
                         <table class="w-100">
-                            <tr><td style="width: 15px;"><b>{{ $i }}.</b></td><td style="width: 50px;">Nama Kapal</td><td class="sep-col">:</td><td>{{ $bulk->ship_name ?? '' }}</td></tr>
+                            <!-- UPDATED: Width Nama Kapal diperlebar jadi 70px -->
+                            <tr><td style="width: 15px;"><b>{{ $i }}.</b></td><td style="width: 70px;">Nama Kapal</td><td class="sep-col">:</td><td>{{ $bulk->ship_name ?? '' }}</td></tr>
                             <tr><td></td><td>Agent</td><td class="sep-col">:</td><td>{{ $bulk->agent ?? '' }}</td></tr>
                             <tr><td></td><td>Jenis Urea</td><td class="sep-col">:</td><td>{{ $bulk->commodity ?? '' }}</td></tr>
                             <tr><td></td><td>Kapasitas</td><td class="sep-col">:</td><td>{{ isset($bulk) ? number_format($bulk->capacity, 0) . ' MT' : '' }}</td></tr>
@@ -582,25 +595,41 @@
     <br>
 
     <!-- SIGNATURES -->
-    <table class="w-100 no-border" style="margin-top: 25px; font-size: 8pt;">
+    <table class="w-100 no-border" style="margin-top: 25px; font-size: 9pt;">
         <tr>
             <td class="text-center w-33" style="vertical-align: top;">
                 Mengetahui,<br>
                 Manager Operasi & K3
-                <br><br><br><br><br><br>
+
+                <!-- Placeholder Tanda Tangan -->
+                <div class="signature-box">
+                    <!-- GANTI src DI BAWAH DENGAN VARIABLE GAMBAR TANDA TANGAN -->
+                    <!-- <img src="{{ public_path('assets/ttd_manager.png') }}" class="signature-img"> -->
+                </div>
+
                 ( <u>Mustari, ST</u> )
             </td>
             <td class="text-center w-33" style="vertical-align: top;">
                 Diterima / Melanjutkan,<br>
                 Foreman Group {{ $report->received_by_group }}
-                <br><br><br><br><br><br>
+
+                <!-- Placeholder Tanda Tangan -->
+                <div class="signature-box">
+                    <!-- <img src="{{ public_path('assets/ttd_foreman1.png') }}" class="signature-img"> -->
+                </div>
+
                 ( _____________________ )
             </td>
             <td class="text-center w-33" style="vertical-align: top;">
                 Bontang, {{ \Carbon\Carbon::parse($report->report_date)->translatedFormat('d F Y') }}<br>
                 Dilaksanakan / Menyerahkan,<br>
                 Foreman Group {{ $report->group_name }}
-                <br><br><br><br><br><br>
+
+                <!-- Placeholder Tanda Tangan -->
+                <div class="signature-box">
+                    <!-- <img src="{{ public_path('assets/ttd_foreman2.png') }}" class="signature-img"> -->
+                </div>
+
                 ( _____________________ )
             </td>
         </tr>

@@ -69,6 +69,8 @@
 </style>
 @endpush
 
+@section('title', 'Form Laporan Shift Harian')
+
 @section('content')
     <!-- NAVBAR -->
     @include('officer.layouts.navbar')
@@ -114,6 +116,7 @@
         <!-- HEADER TABIGASI UTAMA -->
         @include('officer.sections.header')
 
+        <!-- SECTIONS -->
         @include('officer.sections.infoumum')
         @include('officer.sections.muatkantong')
         @include('officer.sections.muaturea')
@@ -129,15 +132,16 @@
 <script>
     // --- AMBIL DATA KARYAWAN DARI CONTROLLER ---
     // Konversi Data PHP ke JavaScript Object
-    const employeesGrouped = @json($employeesGrouped);
+    const employeesGrouped = @json($employeesGrouped ?? []);
 
     // --- LOGIC AUTO FILL EMPLOYEE ---
     function autoFillEmployees() {
         const groupSelect = document.getElementById('group_name');
         const timeRangeSelect = document.getElementById('time_range');
+        const shiftBody = document.getElementById('shift-table-body'); // Target Table Body
 
         // Pastikan elemen ada sebelum lanjut
-        if (!groupSelect || !timeRangeSelect) return;
+        if (!groupSelect || !timeRangeSelect || !shiftBody) return;
 
         const selectedGroup = groupSelect.value; // Contoh: "A"
         const selectedTimeRange = timeRangeSelect.value; // Contoh: "07-15"
@@ -158,61 +162,56 @@
         }
 
         // 2. Ambil Daftar Karyawan Berdasarkan Group
-        // Key di object employeesGrouped formatnya "Group A", "Group B", dst.
         const groupKey = "Group " + selectedGroup;
-        // Gunakan spread operator [...] untuk meng-copy array agar tidak mengubah data asli
         let employees = [...(employeesGrouped[groupKey] || [])];
 
         // 3. SORTING BERDASARKAN NPK
-        // Logic: 2000... < 2003... dan 2008... < 2023...
-        // Menggunakan localeCompare dengan opsi numeric untuk perbandingan string angka yang akurat
         employees.sort((a, b) => {
-            const npkA = a.npk || ''; // Antisipasi jika npk null
+            const npkA = a.npk || '';
             const npkB = b.npk || '';
-            // localeCompare akan menangani:
-            // "2000.1.010" vs "2003.1.030" -> 2000 menang (sesuai abjad string)
-            // "2008.1.055" vs "2023.K.018" -> 2008 menang
-            // "2023.1..." vs "2023.K..."  -> 1 menang lawan K (ASCII 1 < K)
             return npkA.localeCompare(npkB, undefined, { numeric: true, sensitivity: 'base' });
         });
 
-        // 4. Loop 14 Baris Input Karyawan Shift
-        for (let i = 1; i <= 14; i++) {
-            const nameInput = document.querySelector(`input[name="shift_nama_${i}"]`);
-            const inInput = document.querySelector(`input[name="shift_masuk_${i}"]`);
-            const outInput = document.querySelector(`input[name="shift_pulang_${i}"]`);
+        // 4. GENERATE BARIS TABLE SECARA DINAMIS
+        // Kosongkan tabel terlebih dahulu
+        shiftBody.innerHTML = '';
 
-            // Ambil data karyawan index ke-(i-1) karena array JS mulai dari 0
-            const employee = employees[i - 1];
+        // Tentukan jumlah baris: Jika ada karyawan, gunakan jumlah karyawan. Jika tidak, default 14.
+        const rowCount = employees.length > 0 ? employees.length : 14;
 
-            if (employee) {
-                // ISI FORM JIKA ADA KARYAWAN
-                if(nameInput) nameInput.value = employee.name;
+        for (let i = 0; i < rowCount; i++) {
+            const no = i + 1;
+            const employee = employees[i]; // Data karyawan (bisa undefined jika i >= employees.length)
 
-                // Set Waktu (Handle Flatpickr jika aktif)
-                if(inInput) {
-                    inInput.value = timeIn;
-                    if(inInput._flatpickr) inInput._flatpickr.setDate(timeIn, true);
-                }
+            const nameVal = employee ? employee.name : '';
+            const inVal = (employee && timeIn) ? timeIn : '';
+            const outVal = (employee && timeOut) ? timeOut : '';
 
-                if(outInput) {
-                    outInput.value = timeOut;
-                    if(outInput._flatpickr) outInput._flatpickr.setDate(timeOut, true);
-                }
+            // Buat HTML Row Baru
+            const rowHTML = `
+                <tr>
+                    <td class="text-center">${no}</td>
+                    <td><input type="text" class="form-control" name="shift_nama_${no}" value="${nameVal}"></td>
+                    <td><input type="text" class="form-control flatpickr-time" name="shift_masuk_${no}" value="${inVal}" placeholder="00:00"></td>
+                    <td><input type="text" class="form-control flatpickr-time" name="shift_pulang_${no}" value="${outVal}" placeholder="00:00"></td>
+                    <td><input type="text" class="form-control" name="shift_ket_${no}"></td>
+                </tr>
+            `;
 
-            } else {
-                // KOSONGKAN JIKA TIDAK ADA DATA (Sisa baris)
-                if(nameInput) nameInput.value = '';
-                if(inInput) {
-                    inInput.value = '';
-                    if(inInput._flatpickr) inInput._flatpickr.clear();
-                }
-                if(outInput) {
-                    outInput.value = '';
-                    if(outInput._flatpickr) outInput._flatpickr.clear();
-                }
-            }
+            // Append row ke body
+            shiftBody.insertAdjacentHTML('beforeend', rowHTML);
         }
+
+        // 5. RE-INITIALIZE FLATPICKR PADA INPUT BARU
+        // Karena elemen input baru saja dibuat (dinamis), flatpickr harus dipanggil ulang
+        flatpickr(".flatpickr-time", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            disableMobile: "true",
+            allowInput: true
+        });
     }
 
     // --- LOGIC AUTO SYNC SHIFT TO TIME RANGE ---
@@ -225,35 +224,23 @@
         const shift = shiftSelect.value;
         let timeValue = '';
 
-        // Mapping Logic
         if (shift === 'Pagi') timeValue = '07-15';
         else if (shift === 'Sore') timeValue = '15-23';
         else if (shift === 'Malam') timeValue = '23-07';
 
         if (timeValue) {
-            // 1. Update Native Select Value
             timeRangeSelect.value = timeValue;
-
-            // 2. Update Custom Select UI (Agar tampilan sesuai dengan native select)
             const customContainer = timeRangeSelect.nextElementSibling;
             if (customContainer && customContainer.classList.contains('custom-select-container')) {
                 const trigger = customContainer.querySelector('.custom-select-trigger');
                 const options = customContainer.querySelectorAll('.custom-option');
-
-                // Update Trigger Text
                 const selectedOption = timeRangeSelect.options[timeRangeSelect.selectedIndex];
                 if(trigger && selectedOption) trigger.textContent = selectedOption.text;
-
-                // Update Active Option Class
                 options.forEach(opt => {
                     if (opt.dataset.value === timeValue) opt.classList.add('selected');
                     else opt.classList.remove('selected');
                 });
             }
-
-            // 3. Trigger Change Event
-            // Kita dispatch event 'change' ke timeRangeSelect, karena autoFillEmployees
-            // mendengarkan perubahan di time_range.
             timeRangeSelect.dispatchEvent(new Event('change'));
         }
     }
@@ -276,7 +263,8 @@
                 <div class="input-loading"><label>Marking</label><input type="text" name="marking_${idSuffix}" placeholder="Kode Marking"></div>
             </div>
             <div class="loading-info">
-                <div class="input-loading"><label>Waktu Sandar</label><input type="text" id="arrival_time_${idSuffix}" class="arrival-time-picker" placeholder="Pilih Waktu..."></div>
+                <!-- UPDATED: Added autocomplete="off" -->
+                <div class="input-loading"><label>Waktu Sandar</label><input type="text" id="arrival_time_${idSuffix}" class="arrival-time-picker" placeholder="Pilih Waktu..." autocomplete="off"></div>
                 <div class="input-loading"><label>Gang Operasi</label><input type="text" name="operating_gang_${idSuffix}" placeholder="Nama/No Gang"></div>
                 <div class="input-loading"><label>Jumlah TKBM</label><input type="number" name="tkbm_count_${idSuffix}" placeholder="0"></div>
                 <div class="input-loading"><label>Mandor</label><input type="text" name="foreman_${idSuffix}" placeholder="Nama Foreman"></div>
@@ -358,7 +346,8 @@
                     </div>
                     <div class="input-timesheet">
                         <div class="time-input-wrapper">
-                            <input type="tel" maxlength="5" id="time_delivery_${idSuffix}" class="time-input" placeholder="00:00">
+                            <!-- UPDATED: Added autocomplete="off" -->
+                            <input type="tel" maxlength="5" id="time_delivery_${idSuffix}" class="time-input" placeholder="00:00" autocomplete="off">
                             <button type="button" class="btn-set-now" id="btn-set-now-delivery-${idSuffix}"><i class="fa-regular fa-clock"></i></button>
                         </div>
                         <input type="text" id="kegiatan_delivery_${idSuffix}" class="activity-input" placeholder="Ketik Aktivitas...">
@@ -395,7 +384,8 @@
                     </div>
                     <div class="input-timesheet">
                         <div class="time-input-wrapper">
-                            <input type="tel" maxlength="5" id="time_loading_${idSuffix}" class="time-input" placeholder="00:00">
+                            <!-- UPDATED: Added autocomplete="off" -->
+                            <input type="tel" maxlength="5" id="time_loading_${idSuffix}" class="time-input" placeholder="00:00" autocomplete="off">
                             <button type="button" class="btn-set-now" id="btn-set-now-loading-${idSuffix}"><i class="fa-regular fa-clock" style="color: var(--green);"></i></button>
                         </div>
                         <input type="text" id="kegiatan_loading_${idSuffix}" class="activity-input" placeholder="Ketik Aktivitas...">
@@ -461,13 +451,15 @@
                     <label>Kapasitas / Partai (Ton)</label>
                     <input type="number" name="capacity_urea_${idSuffix}" placeholder="0">
                 </div>
+                <!-- UPDATED: Added autocomplete="off" -->
                 <div class="input-item">
                     <label>Waktu Sandar</label>
-                    <input type="text" name="berthing_time_urea_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Waktu Sandar">
+                    <input type="text" name="berthing_time_urea_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Waktu Sandar" autocomplete="off">
                 </div>
+                <!-- UPDATED: Added autocomplete="off" -->
                 <div class="input-item">
                     <label>Mulai Muat</label>
-                    <input type="text" name="start_loading_time_urea_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Waktu Mulai">
+                    <input type="text" name="start_loading_time_urea_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Waktu Mulai" autocomplete="off">
                 </div>
             </div>
         </div>
@@ -485,7 +477,8 @@
                 <div class="input-laporan-harian d-flex align-items-center align-self-stretch"
                     style="padding: 15px; gap: 10px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-card);">
 
-                    <input type="text" id="input-datetime-urea-${idSuffix}" class="input-laporan flatpickr-datetime" style="width: 220px !important; flex-shrink: 0;" placeholder="Pilih Waktu">
+                    <!-- UPDATED: Added autocomplete="off" -->
+                    <input type="text" id="input-datetime-urea-${idSuffix}" class="input-laporan flatpickr-datetime" style="width: 220px !important; flex-shrink: 0;" placeholder="Pilih Waktu" autocomplete="off">
                     <input type="text" id="input-activity-urea-${idSuffix}" class="input-laporan" style="flex: 1; min-width: 0; width: auto !important;" placeholder="Ketik Aktivitas">
                     <input type="number" id="input-cob-urea-${idSuffix}" class="input-laporan" style="text-align: center; width:100px !important; flex-shrink: 0;" placeholder="COB">
 
@@ -509,9 +502,27 @@
         flatpickr(".arrival-time-picker", {
             enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true, disableMobile: false, allowInput: true
         });
+
+        // --- UPDATED CONFIG FOR DATETIME (Use Confirm Plugin) ---
         flatpickr(".flatpickr-datetime", {
-            enableTime: true, dateFormat: "Y-m-d H:i", altInput: true, altFormat: "j F Y, H:i", time_24hr: true, disableMobile: false, allowInput: true
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            altInput: true,
+            altFormat: "j F Y, H:i",
+            time_24hr: true,
+            // PENTING: Pakai "true" string untuk disableMobile di JS agar memaksa UI Flatpickr di HP
+            // Ini memastikan fitur confirm button juga muncul di HP
+            disableMobile: "true",
+            allowInput: true,
+            // Plugin Confirm Date: Mencegah kalender tertutup sebelum user klik OK
+            plugins: [new confirmDatePlugin({
+                confirmIcon: "<i class='fa-solid fa-check'></i>",
+                confirmText: "OK ",
+                showAlways: true,
+                theme: "light"
+            })]
         });
+
         flatpickr(".flatpickr-time-only", {
             enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, disableMobile: false, allowInput: true
         });
@@ -520,14 +531,30 @@
         });
 
         // Auto-format input jam
-        document.querySelectorAll('.time-input').forEach(input => {
-            input.addEventListener('input', function(e){
-                let value = e.target.value.replace(/[^0-9]/g, '');
-                if (value.length > 4) value = value.substring(0, 4);
-                if (value.length >= 3) e.target.value = value.substring(0, 2) + ':' + value.substring(2);
-                else e.target.value = value;
-            });
-        });
+        // Kita pasang listener global di body agar elemen dinamis juga kena
+        document.body.removeEventListener('input', handleTimeMasking);
+        document.body.addEventListener('input', handleTimeMasking);
+    }
+
+    // --- GLOBAL TIME MASKING HANDLER ---
+    // Logika ini akan mendengarkan semua input di halaman
+    // Jika input memiliki class time-input, flatpickr-time, atau flatpickr-time-only
+    // maka akan otomatis diformat 1230 -> 12:30
+    function handleTimeMasking(e) {
+        if (e.target.matches('.time-input, .flatpickr-time, .flatpickr-time-only')) {
+            let value = e.target.value.replace(/[^0-9]/g, '');
+            if (value.length > 4) value = value.substring(0, 4);
+
+            let formatted = value;
+            if (value.length >= 3) {
+                formatted = value.substring(0, 2) + ':' + value.substring(2);
+            }
+
+            // Hanya update jika format berubah agar cursor tidak lompat-lompat aneh
+            if (e.target.value !== formatted) {
+                e.target.value = formatted;
+            }
+        }
     }
 
     // --- NAVIGATION LOGIC ---

@@ -1,6 +1,6 @@
 @extends('officer.layouts.master')
 
-@section('title', 'Riwayat Laporan')
+@section('title', 'Opstrack')
 
 @push('styles')
 <style>

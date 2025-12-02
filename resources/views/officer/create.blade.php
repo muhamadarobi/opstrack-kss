@@ -187,6 +187,20 @@
         });
     }
 
+    // --- LOGIC HANDLING ABSENSI TIDAK MASUK ---
+    // Fungsi ini dipanggil ketika select option Keterangan berubah
+    function checkShiftAttendance(selectElement, index) {
+        if (selectElement.value === "Tidak Masuk") {
+            // Cari input jam masuk dan pulang berdasarkan index
+            const inputMasuk = document.querySelector(`input[name="shift_masuk_${index}"]`);
+            const inputPulang = document.querySelector(`input[name="shift_pulang_${index}"]`);
+
+            // Kosongkan nilainya
+            if (inputMasuk) inputMasuk.value = "";
+            if (inputPulang) inputPulang.value = "";
+        }
+    }
+
     // --- LOGIC AUTO FILL EMPLOYEE DENGAN DYNAMIC ROWS ---
     function autoFillEmployees() {
         const groupSelect = document.getElementById('group_name');
@@ -201,13 +215,13 @@
         let timeIn = '';
         let timeOut = '';
 
-        if (selectedTimeRange === '07-15') {
+        if (selectedTimeRange === '07.00 - 15.00') {
             timeIn = '07:00';
             timeOut = '15:00';
-        } else if (selectedTimeRange === '15-23') {
+        } else if (selectedTimeRange === '15.00 - 23.00') {
             timeIn = '15:00';
             timeOut = '23:00';
-        } else if (selectedTimeRange === '23-07') {
+        } else if (selectedTimeRange === '23.00 - 07.00') {
             timeIn = '23:00';
             timeOut = '07:00';
         }
@@ -256,14 +270,20 @@
                         <input type="text" class="form-control flatpickr-time" name="shift_pulang_${i}" placeholder="00:00" value="${valPulang}">
                     </td>
                     <td>
-                        <input type="text" class="form-control" name="shift_ket_${i}">
+                        <select class="form-select" name="shift_ket_${i}" onchange="checkShiftAttendance(this, ${i})">
+                            <option value=""></option>
+                            <option value="Tidak Masuk">Tidak Masuk</option>
+                        </select>
                     </td>
                 </tr>
             `;
         }
         shiftBody.innerHTML = htmlContent;
-        // Init Flatpickr hanya pada elemen baru ini (Optimasi)
+        // Init Flatpickr pada elemen baru
         initFlatpickrOnElement(shiftBody);
+
+        // PERBAIKAN: Init Custom Select pada elemen baru di tabel shift
+        shiftBody.querySelectorAll('select').forEach(sel => setupCustomSelects(sel));
     }
 
     // --- LOGIC AUTO SYNC SHIFT TO TIME RANGE ---
@@ -276,9 +296,9 @@
         const shift = shiftSelect.value;
         let timeValue = '';
 
-        if (shift === 'Pagi') timeValue = '07-15';
-        else if (shift === 'Sore') timeValue = '15-23';
-        else if (shift === 'Malam') timeValue = '23-07';
+        if (shift === 'Pagi') timeValue = '07.00 - 15.00';
+        else if (shift === 'Sore') timeValue = '15.00 - 23.00';
+        else if (shift === 'Malam') timeValue = '23.00 - 07.00';
 
         if (timeValue) {
             timeRangeSelect.value = timeValue;
@@ -616,7 +636,8 @@
         selects.forEach(select => {
             if (select.nextElementSibling && select.nextElementSibling.classList.contains('custom-select-container')) return;
             // Skip if container logic handles it separately
-            if (select.closest('.table') && !select.closest('#container-table-body') && !select.closest('#vehicle-table-body') && !select.closest('#inventory-table-body') && !select.closest('#shelter-table-body')) return;
+            // PERBAIKAN: Menambahkan !select.closest('#shift-table-body') agar tabel shift TIDAK di-skip
+            if (select.closest('.table') && !select.closest('#container-table-body') && !select.closest('#vehicle-table-body') && !select.closest('#inventory-table-body') && !select.closest('#shelter-table-body') && !select.closest('#shift-table-body')) return;
 
             const container = document.createElement('div');
             container.className = 'custom-select-container';

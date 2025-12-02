@@ -29,6 +29,8 @@ Route::middleware('auth')->group(function () {
         // Dashboard & Menu Utama
         Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 
+        Route::get('/report/{id}/show', [AdminController::class, 'showPdf'])->name('admin.report.show');
+
         Route::get('/dokumen', [AdminController::class, 'dokumen'])->name('admin.dokumen');
         Route::delete('/admin/dokumen/{id}', [AdminController::class, 'dokumenDestroy'])->name('admin.dokumen.destroy');
 

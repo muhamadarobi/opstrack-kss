@@ -9,25 +9,24 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         // 1. Buat Role
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
         $rolePetugas = Role::firstOrCreate(['name' => 'petugas']);
 
-        // 2. Buat User ADMIN (Password tetap default 'password' atau sesuaikan keinginan)
+        // 2. Buat User ADMIN (Manajer Operasional)
         User::updateOrCreate(
             ['username' => 'admin'],
             [
-                'name' => 'Super Administrator',
-                'email' => 'admin@example.com',
+                'name' => 'Manajer Operasional',
+                'email' => 'manager@example.com',
                 'password' => Hash::make('password'),
                 'role_id' => $roleAdmin->id,
                 'status' => 'aktif',
-                'group' => null, // Admin tidak punya grup
+                'group' => null,
+                // Arahkan ke file admin.png di folder signatures
+                'signature_path' => 'signatures/admin.png',
             ]
         );
 
@@ -35,51 +34,38 @@ class DatabaseSeeder extends Seeder
         $groups = ['a', 'b', 'c', 'd'];
 
         foreach ($groups as $group) {
-            $upperGroup = strtoupper($group); // Menjadi 'A', 'B', 'C', 'D'
-
-            // Password dinamis sesuai grup (group.a, group.b, dst)
+            $upperGroup = strtoupper($group);
             $password = Hash::make("group.{$group}");
 
-            // A. Buat KEPALA REGU (Karu) untuk Group ini
-            // Username: karu.a, karu.b, dst.
+            // A. Buat KEPALA REGU (Karu)
             User::updateOrCreate(
                 ['username' => "karu.{$group}"],
                 [
                     'name' => "Kepala Regu {$upperGroup}",
                     'email' => "karu.{$group}@example.com",
-                    'password' => $password, // Password: group.a
+                    'password' => $password,
                     'role_id' => $rolePetugas->id,
                     'status' => 'aktif',
-                    'group' => $group, // Mengisi kolom enum group
+                    'group' => $group,
+                    // Otomatis set path tanda tangan
+                    'signature_path' => "signatures/karu.{$group}.png",
                 ]
             );
 
-            // B. Buat WAKIL REGU (Wakaru) untuk Group ini
-            // Username: wakaru.a, wakaru.b, dst.
+            // B. Buat WAKIL REGU (Wakaru)
             User::updateOrCreate(
                 ['username' => "wakaru.{$group}"],
                 [
                     'name' => "Wakil Regu {$upperGroup}",
-                    'email' => "wakaru.{$group}@example.com",
-                    'password' => $password, // Password: group.a
+                    'email' => "wakil.{$group}@example.com",
+                    'password' => $password,
                     'role_id' => $rolePetugas->id,
                     'status' => 'aktif',
-                    'group' => $group, // Mengisi kolom enum group
+                    'group' => $group,
+                    // Otomatis set path tanda tangan
+                    'signature_path' => "signatures/wakaru.{$group}.png",
                 ]
             );
         }
-
-        // 4. (Opsional) Buat User NONAKTIF
-        User::updateOrCreate(
-            ['username' => 'mantan_petugas'],
-            [
-                'name' => 'User Nonaktif',
-                'email' => 'nonaktif@example.com',
-                'password' => Hash::make('password'),
-                'role_id' => $rolePetugas->id,
-                'status' => 'nonaktif',
-                'group' => 'a',
-            ]
-        );
     }
 }

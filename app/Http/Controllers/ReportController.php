@@ -359,7 +359,7 @@ class ReportController extends Controller
                     'category'              => 'vehicle',
                     'item_name'             => 'Unit ID: ' . ($log['master_unit_id'] ?? 'Unknown'),
                     'master_id'             => $log['master_unit_id'] ?? null,
-                    'fuel_level'            => (float) ($log['fuel_level'] ?? 0),
+                    'fuel_level' => isset($log['fuel_level']) ? (float) $log['fuel_level'] : null,
                     'condition_received'    => $log['condition_received'] ?? null,
                     'condition_handed_over' => $log['condition_handed_over'] ?? null,
                 ]);

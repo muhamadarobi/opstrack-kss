@@ -596,45 +596,77 @@
         </table>
     </div>
 
-    <br>
+    <!-- SIGNATURES (UPDATED LAYOUT) -->
 
-    <!-- SIGNATURES -->
-    <table class="w-100 no-border" style="margin-top: 25px; font-size: 9pt;">
+    <!-- 1. Kota dan Tanggal (Menggunakan Tabel agar sejajar presisi dengan kolom tanda tangan kanan) -->
+    <table class="w-100 no-border" style="margin-top: 25px; margin-bottom: 10px; font-size: 9pt;">
         <tr>
-            <td class="text-center w-33" style="vertical-align: top;">
-                Mengetahui,<br>
-                Manager Operasi & K3
-
-                <!-- Placeholder Tanda Tangan -->
-                <div class="signature-box">
-                    <!-- GANTI src DI BAWAH DENGAN VARIABLE GAMBAR TANDA TANGAN -->
-                    <!-- <img src="{{ public_path('assets/ttd_manager.png') }}" class="signature-img"> -->
-                </div>
-
-                ( <u>Mustari, ST</u> )
+            <td class="w-33"></td> <!-- Kosong untuk kiri -->
+            <td class="w-33"></td> <!-- Kosong untuk tengah -->
+            <td class="w-33 text-center"> <!-- Rata tengah mengikuti kolom tanda tangan kanan -->
+                Bontang, {{ \Carbon\Carbon::parse($report->report_date)->locale('id')->translatedFormat('d F Y') }}
             </td>
-            <td class="text-center w-33" style="vertical-align: top;">
-                Diterima / Melanjutkan,<br>
-                Foreman Group {{ $report->received_by_group }}
+        </tr>
+    </table>
 
-                <!-- Placeholder Tanda Tangan -->
-                <div class="signature-box">
-                    <!-- <img src="{{ public_path('assets/ttd_foreman1.png') }}" class="signature-img"> -->
+    <!-- Tabel Tanda Tangan -->
+    <table class="w-100 no-border" style="font-size: 9pt;">
+        <tr>
+            <!-- KIRI: MANAGER OPERASI & K3 (ADMIN) -->
+            <td class="text-center w-33" style="vertical-align: top;">
+                <!-- Spacer agar sejajar dengan baris kedua kolom kanan (karena ada tanggal) -->
+                <div style="margin-bottom: 20px;">Mengetahui,</div>
+
+                <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
+                    @if($report->status == 'approved' && $report->approver && $report->approver->signature_path)
+                        @if(file_exists(public_path($report->approver->signature_path)))
+                            <img src="{{ public_path($report->approver->signature_path) }}" class="signature-img">
+                        @endif
+                    @endif
                 </div>
 
-                ( _____________________ )
+                <div style="font-weight: bold; text-decoration: underline;">
+                    {{ $report->approver ? $report->approver->name : 'Mustari, ST' }}
+                </div>
+                <div>Manager Operasi & K3</div>
             </td>
-            <td class="text-center w-33" style="vertical-align: top;">
-                Bontang, {{ \Carbon\Carbon::parse($report->report_date)->translatedFormat('d F Y') }}<br>
-                Dilaksanakan / Menyerahkan,<br>
-                Foreman Group {{ $report->group_name }}
 
-                <!-- Placeholder Tanda Tangan -->
-                <div class="signature-box">
-                    <!-- <img src="{{ public_path('assets/ttd_foreman2.png') }}" class="signature-img"> -->
+            <!-- TENGAH: PENERIMA (FOREMAN SHIFT BERIKUTNYA) -->
+            <td class="text-center w-33" style="vertical-align: top;">
+                <!-- Spacer agar sejajar dengan baris kedua kolom kanan -->
+                <div style="margin-bottom: 20px;">Diterima / Melanjutkan,</div>
+
+                <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
+                    @if(in_array($report->status, ['acknowledged', 'approved']) && $report->receiver && $report->receiver->signature_path)
+                        @if(file_exists(public_path($report->receiver->signature_path)))
+                            <img src="{{ public_path($report->receiver->signature_path) }}" class="signature-img">
+                        @endif
+                    @endif
                 </div>
 
-                ( _____________________ )
+                <div style="font-weight: bold; text-decoration: underline;">
+                    {{ $report->receiver ? $report->receiver->name : '_____________________' }}
+                </div>
+                <div>Foreman Group {{ $report->received_by_group }}</div>
+            </td>
+
+            <!-- KANAN: PEMBUAT (FOREMAN SHIFT SAAT INI) -->
+            <td class="text-center w-33" style="vertical-align: top;">
+                <!-- Tanggal diletakkan di dalam cell agar center dengan tanda tangan -->
+                <div style="margin-bottom: 20px;">Dilaksanakan / Menyerahkan,</div>
+
+                <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
+                    @if($report->creator && $report->creator->signature_path)
+                        @if(file_exists(public_path($report->creator->signature_path)))
+                            <img src="{{ public_path($report->creator->signature_path) }}" class="signature-img">
+                        @endif
+                    @endif
+                </div>
+
+                <div style="font-weight: bold; text-decoration: underline;">
+                    {{ $report->creator ? $report->creator->name : '_____________________' }}
+                </div>
+                <div>Foreman Group {{ $report->group_name }}</div>
             </td>
         </tr>
     </table>

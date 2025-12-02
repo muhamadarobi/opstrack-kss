@@ -48,7 +48,7 @@
             </div>
 
             <div class="button-form d-flex justify-content-between align-items-center align-self-stretch">
-                <a href="{{ route('reports.history') }}" class="btn cancel">Batal</a>
+                <a href="{{ route('reports.index') }}" class="btn cancel">Batal</a>
                 <div class="btn next" onclick="showSection('section-muat-kantong')">Lanjut</div>
             </div>
         </div>

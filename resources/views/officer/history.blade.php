@@ -1,6 +1,6 @@
 @extends('officer.layouts.master')
 
-@section('title', 'Opstrack')
+@section('title', 'Opstrack - Riwayat & Tanda Tangan')
 
 @push('styles')
 <style>
@@ -13,7 +13,7 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
-        pointer-events: none; /* Allow clicking through container */
+        pointer-events: none;
     }
 
     .toast-card {
@@ -27,17 +27,13 @@
         gap: 15px;
         border-left: 6px solid;
         pointer-events: auto;
-        /* Animation: Slide In -> Stay -> Fade Out */
         animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s ease 4.5s forwards;
         position: relative;
         overflow: hidden;
     }
 
-    /* Success Theme */
     .toast-card.success { border-left-color: var(--green); }
     .toast-card.success .icon-box { background-color: rgba(25, 135, 84, 0.1); color: var(--green); }
-
-    /* Error Theme */
     .toast-card.error { border-left-color: var(--redcolor); }
     .toast-card.error .icon-box { background-color: rgba(210, 0, 0, 0.1); color: var(--redcolor); }
 
@@ -58,17 +54,8 @@
         flex: 1;
     }
 
-    .toast-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--text-main);
-    }
-
-    .toast-message {
-        font-size: 12px;
-        color: var(--text-muted);
-        line-height: 1.4;
-    }
+    .toast-title { font-size: 14px; font-weight: 700; color: var(--text-main); }
+    .toast-message { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
 
     .btn-close-toast {
         background: none;
@@ -81,7 +68,6 @@
     }
     .btn-close-toast:hover { color: var(--text-main); }
 
-    /* Progress Bar Animation */
     .toast-progress {
         position: absolute;
         bottom: 0;
@@ -93,7 +79,7 @@
     .toast-progress-bar {
         height: 100%;
         width: 100%;
-        background-color: currentColor; /* Inherits color from parent (green/red) */
+        background-color: currentColor;
         animation: progress 4.5s linear forwards;
         transform-origin: left;
     }
@@ -111,13 +97,14 @@
 
     /* --- CONTAINER & LAYOUT --- */
     .history-container {
-        padding: 10px 60px; /* Padding sisi agar tidak mepet */
+        padding: 10px 60px;
         display: flex;
         flex-direction: column;
         gap: 25px;
         width: 100%;
-        max-width: 2000px; /* Batas lebar agar tidak terlalu stretch di layar lebar */
+        max-width: 2000px;
         margin: 0 auto;
+        padding-bottom: 50px;
     }
 
     @media (max-width: 768px) {
@@ -175,6 +162,85 @@
         box-shadow: 0 6px 15px rgba(0, 119, 194, 0.3);
     }
 
+    /* --- TAB NAVIGATION STYLE --- */
+    .tabs-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .tab-nav {
+        display: flex;
+        gap: 30px;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 0;
+        margin-bottom: 10px;
+    }
+
+    .tab-item {
+        padding: 10px 5px 15px 5px;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text-muted);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+        background: none;
+        border: none;
+    }
+
+    .tab-item:hover {
+        color: var(--blue-kss);
+    }
+
+    .tab-item.active {
+        color: var(--blue-kss);
+        font-weight: 600;
+    }
+
+    .tab-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px; /* Overlap border bottom parent */
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: var(--blue-kss);
+        border-radius: 2px 2px 0 0;
+    }
+
+    /* Badge Counter di Tab */
+    .tab-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--redcolor);
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 9px;
+        padding: 0 5px;
+        margin-left: 6px;
+        vertical-align: middle;
+    }
+
+    /* Tab Content Animation */
+    .tab-pane {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
     /* --- TABLE CARD STYLE --- */
     .table-card {
         background-color: var(--bg-card);
@@ -183,13 +249,25 @@
         border: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
-        overflow: hidden; /* Clip corners */
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    /* Header Tabel Pending (Warna Beda) */
+    .table-card.pending-section {
+        border-color: rgba(243, 156, 18, 0.3);
+    }
+    .table-card.pending-section .card-header-custom {
+        background-color: rgba(243, 156, 18, 0.05); /* Orange muda */
+    }
+    .table-card.pending-section .card-title {
+        color: var(--orange-kss);
     }
 
     .card-header-custom {
         padding: 20px 25px;
         border-bottom: 1px solid var(--border-color);
-        background-color: rgba(0, 119, 194, 0.03); /* Biru sangat muda */
+        background-color: rgba(0, 119, 194, 0.03);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -205,17 +283,8 @@
     }
 
     /* --- TABLE CUSTOMIZATION --- */
-    .table-responsive {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    .custom-table {
-        width: 100%;
-        border-collapse: collapse;
-        white-space: nowrap;
-    }
-
+    .table-responsive { width: 100%; overflow-x: auto; }
+    .custom-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
     .custom-table th {
         background-color: var(--bg-body);
         color: var(--text-muted);
@@ -227,7 +296,6 @@
         text-align: left;
         border-bottom: 2px solid var(--border-color);
     }
-
     .custom-table td {
         padding: 18px 25px;
         color: var(--text-main);
@@ -236,102 +304,65 @@
         vertical-align: middle;
         font-weight: 500;
     }
-
-    .custom-table tbody tr {
-        transition: background-color 0.2s;
-    }
-
-    .custom-table tbody tr:hover {
-        background-color: var(--hover-bg);
-    }
-
-    .custom-table tbody tr:last-child td {
-        border-bottom: none;
-    }
+    .custom-table tbody tr { transition: background-color 0.2s; }
+    .custom-table tbody tr:hover { background-color: var(--hover-bg); }
+    .custom-table tbody tr:last-child td { border-bottom: none; }
 
     /* Column Specifics */
     .col-no { width: 60px; text-align: center !important; color: var(--text-muted); }
-    .col-aksi { width: 120px; text-align: right !important; }
-
-    /* Badges & Text Styles */
-    .doc-type {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .doc-title { font-weight: 600; color: var(--text-main); }
-    .doc-id { font-size: 11px; color: var(--text-muted); }
-
-    .date-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--text-main);
-    }
-    .date-info i { color: var(--text-muted); font-size: 12px; }
-
-    .badge-shift {
-        display: inline-flex;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    .badge-shift.pagi { background-color: rgba(25, 135, 84, 0.1); color: var(--green); }
-    .badge-shift.sore { background-color: rgba(243, 156, 18, 0.1); color: var(--orange-kss); }
-    .badge-shift.malam { background-color: rgba(44, 44, 44, 0.1); color: var(--text-main); }
-    [data-theme="dark"] .badge-shift.malam { background-color: rgba(255, 255, 255, 0.1); color: #fff; }
+    .col-aksi { width: 140px; text-align: right !important; }
 
     /* Action Buttons */
-    .action-group {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-    }
-
+    .action-group { display: flex; gap: 8px; justify-content: flex-end; }
     .btn-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        transition: all 0.2s;
-        cursor: pointer;
-        text-decoration: none;
+        width: 34px; height: 34px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        border: none; transition: all 0.2s; cursor: pointer; text-decoration: none;
     }
-
     .btn-icon.view { background-color: rgba(243, 156, 18, 0.1); color: var(--orange-kss); }
     .btn-icon.view:hover { background-color: var(--orange-kss); color: white; transform: translateY(-2px); }
-
     .btn-icon.edit { background-color: rgba(0, 119, 194, 0.1); color: var(--blue-kss); }
     .btn-icon.edit:hover { background-color: var(--blue-kss); color: white; transform: translateY(-2px); }
 
-    /* Empty State */
-    .empty-state {
-        padding: 50px;
-        text-align: center;
-        color: var(--text-muted);
+    /* Tombol Sign Khusus */
+    .btn-sign-action {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        background-color: rgba(25, 135, 84, 0.1);
+        color: var(--green);
+        border: 1px solid transparent;
     }
-    .empty-icon {
-        font-size: 40px;
-        margin-bottom: 15px;
-        opacity: 0.3;
+    .btn-sign-action:hover {
+        background-color: var(--green);
+        color: white;
+        transform: translateY(-2px);
     }
 
-    /* Pagination */
-    .pagination-wrapper {
-        padding: 20px 25px;
-        border-top: 1px solid var(--border-color);
-        display: flex;
-        justify-content: flex-end;
-    }
+    /* Badges */
+    .doc-type { display: flex; flex-direction: column; gap: 2px; }
+    .doc-title { font-weight: 600; color: var(--text-main); }
+    .doc-id { font-size: 11px; color: var(--text-muted); }
+    .date-info { display: flex; align-items: center; gap: 8px; color: var(--text-main); }
+    .date-info i { color: var(--text-muted); font-size: 12px; }
+    .badge-shift { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-shift.pagi { background-color: rgba(25, 135, 84, 0.1); color: var(--green); }
+    .badge-shift.sore { background-color: rgba(243, 156, 18, 0.1); color: var(--orange-kss); }
+    .badge-shift.malam { background-color: rgba(44, 44, 44, 0.1); color: var(--text-main); }
+
+    .empty-state { padding: 50px; text-align: center; color: var(--text-muted); }
+    .empty-icon { font-size: 40px; margin-bottom: 15px; opacity: 0.3; }
+    .pagination-wrapper { padding: 20px 25px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; }
 </style>
 @endpush
 
 @section('content')
-    <!-- Pastikan include Navbar jika layout master Anda belum meng-include-nya otomatis -->
     @include('officer.layouts.navbar')
 
     <div class="history-container">
@@ -340,138 +371,239 @@
         <div class="header-history">
             <div class="title-group">
                 <span class="title-history">Riwayat Laporan</span>
-                <span class="subtitle-history">Daftar laporan harian shift operasional yang telah dibuat</span>
+                <span class="subtitle-history">Kelola laporan masuk dan riwayat laporan group Anda</span>
             </div>
             <a href="{{ route('reports.create') }}" class="btn-create-report">
                 <i class="fa-solid fa-plus"></i> Buat Laporan Baru
             </a>
         </div>
 
-        <!-- NOTIFIKASI MELAYANG (TOAST) -->
+        <!-- NOTIFIKASI TOAST (Success/Error) -->
         @if(session('success'))
             <div class="toast-container-fixed">
                 <div class="toast-card success">
-                    <div class="icon-box">
-                        <i class="fa-solid fa-check"></i>
-                    </div>
+                    <div class="icon-box"><i class="fa-solid fa-check"></i></div>
                     <div class="toast-content">
-                        <span class="toast-title">Berhasil Disimpan!</span>
+                        <span class="toast-title">Berhasil!</span>
                         <span class="toast-message">{{ session('success') }}</span>
                     </div>
-                    <button class="btn-close-toast" onclick="this.parentElement.remove()">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <!-- Progress Bar Timer -->
-                    <div class="toast-progress">
-                        <div class="toast-progress-bar" style="color: var(--green);"></div>
-                    </div>
+                    <button class="btn-close-toast" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
         @endif
 
-        @if(session('error'))
-            <div class="toast-container-fixed">
-                <div class="toast-card error">
-                    <div class="icon-box">
-                        <i class="fa-solid fa-exclamation"></i>
-                    </div>
-                    <div class="toast-content">
-                        <span class="toast-title">Gagal Menyimpan!</span>
-                        <span class="toast-message">{{ session('error') }}</span>
-                    </div>
-                    <button class="btn-close-toast" onclick="this.parentElement.remove()">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <div class="toast-progress">
-                        <div class="toast-progress-bar" style="color: var(--redcolor);"></div>
+        <!-- TAB NAVIGATION SYSTEM -->
+        <div class="tabs-wrapper">
+            <!-- Buttons Tab -->
+            <div class="tab-nav">
+                <button class="tab-item active" data-target="tab-pending">
+                    Laporan Masuk
+                    @if(isset($pendingReports) && $pendingReports->count() > 0)
+                        <span class="tab-badge">{{ $pendingReports->count() }}</span>
+                    @endif
+                </button>
+                <button class="tab-item" data-target="tab-history">
+                    Riwayat Group
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="tab-content-container">
+
+                <!-- ============================================
+                     TAB 1: LAPORAN MASUK (PERLU TANDA TANGAN)
+                     ============================================ -->
+                <div id="tab-pending" class="tab-pane active">
+                    <div class="table-card pending-section">
+                        <div class="card-header-custom">
+                            <span class="card-title">
+                                <i class="fa-solid fa-file-signature"></i> Laporan Masuk (Perlu Tanda Tangan)
+                            </span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-no">No</th>
+                                        <th>Info Dokumen</th>
+                                        <th>Tanggal Laporan</th>
+                                        <th>Group</th> <!-- DIPISAH -->
+                                        <th>Shift</th> <!-- DIPISAH -->
+                                        <th>Pengunggah</th>
+                                        <th class="col-aksi">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($pendingReports ?? [] as $index => $item)
+                                        <tr>
+                                            <td class="col-no">{{ $index + 1 }}</td>
+                                            <td>
+                                                <div class="doc-type">
+                                                    <span class="doc-title">Laporan Operasional</span>
+                                                    <span class="doc-id">#{{ $item->id }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="date-info">
+                                                    <i class="fa-regular fa-calendar"></i>
+                                                    {{ \Carbon\Carbon::parse($item->report_date)->translatedFormat('d M Y') }}
+                                                </div>
+                                            </td>
+                                            <!-- KOLOM GROUP -->
+                                            <td>
+                                                <div style="font-weight: 600;">Group {{ $item->group_name }}</div>
+                                            </td>
+                                            <!-- KOLOM SHIFT -->
+                                            <td>
+                                                <span class="badge-shift {{ strtolower($item->shift) }}">{{ $item->shift }}</span>
+                                            </td>
+                                            <!-- KOLOM PENGUNGGAH: Menampilkan Nama User dari Controller -->
+                                            <td>
+                                                <div style="font-weight: 600; color: var(--text-main);">{{ $item->user_name }}</div>
+                                                <div style="font-size: 11px; color: var(--text-muted);">Pembuat Laporan</div>
+                                            </td>
+                                            <td class="col-aksi">
+                                                <div class="action-group">
+                                                    {{-- Tombol Lihat --}}
+                                                    <a href="{{ route('reports.show', $item->id) }}" target="_blank" class="btn-icon view" title="Lihat Detail">
+                                                        <i class="fa-regular fa-eye"></i>
+                                                    </a>
+                                                    {{-- Tombol Tanda Tangan --}}
+                                                    <a href="{{ route('reports.sign', $item->id) }}" class="btn-sign-action">
+                                                        <i class="fa-solid fa-pen-nib"></i> TTD
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="empty-state">
+                                                <i class="fa-solid fa-check-double empty-icon" style="color: var(--green);"></i>
+                                                <br>Tidak ada laporan yang menunggu tanda tangan.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endif
 
-        <!-- TABLE CARD -->
-        <div class="table-card">
-            <div class="card-header-custom">
-                <span class="card-title">
-                    <i class="fa-solid fa-file-invoice"></i> Dokumen Tersimpan
-                </span>
-            </div>
+                <!-- ============================================
+                     TAB 2: RIWAYAT LAPORAN GROUP USER
+                     ============================================ -->
+                <div id="tab-history" class="tab-pane">
+                    <div class="table-card">
+                        <div class="card-header-custom">
+                            <span class="card-title">
+                                <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Laporan Group Anda
+                            </span>
+                        </div>
 
-            <div class="table-responsive">
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th class="col-no">No</th>
-                            <th>Jenis Dokumen</th>
-                            <th>Tanggal Laporan</th>
-                            <th>Group / Regu</th>
-                            <th>Shift</th>
-                            <th>Pengunggah</th>
-                            <th class="col-aksi">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($reports as $index => $report)
-                            <tr>
-                                <td class="col-no">{{ $reports->firstItem() + $index }}</td>
-                                <td>
-                                    <div class="doc-type">
-                                        <span class="doc-title">Laporan Harian Shift</span>
-                                        <span class="doc-id">ID: #{{ $report->id }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="date-info">
-                                        <i class="fa-regular fa-calendar"></i>
-                                        {{ \Carbon\Carbon::parse($report->report_date)->translatedFormat('d M Y') }}
-                                    </div>
-                                </td>
-                                <td>Group {{ $report->group_name }}</td>
-                                <td>
-                                    @php
-                                        $shiftClass = match($report->shift) {
-                                            'Pagi' => 'pagi',
-                                            'Sore' => 'sore',
-                                            'Malam' => 'malam',
-                                            default => 'pagi'
-                                        };
-                                    @endphp
-                                    <span class="badge-shift {{ $shiftClass }}">{{ $report->shift }}</span>
-                                </td>
-                                <td>{{ Auth::user()->name ?? 'Petugas' }}</td>
-                                <td class="col-aksi">
-                                    <div class="action-group">
-                                        <a href="{{ route('reports.export_pdf', $report->id) }}" class="btn-icon view" title="Cetak PDF" target="_blank">
-                                            <i class="fa-solid fa-print"></i>
-                                        </a>
-                                        <!-- Tombol Lihat (Opsional, buat route show jika perlu) -->
-                                        <a href="#" class="btn-icon view" title="Lihat Detail"><i class="fa-regular fa-eye"></i></a>
-                                        <!-- Tombol Edit (Opsional) -->
-                                        <!-- <a href="#" class="btn-icon edit" title="Edit Laporan"><i class="fa-solid fa-pencil"></i></a> -->
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="empty-state">
-                                    <i class="fa-regular fa-folder-open empty-icon"></i>
-                                    <br>
-                                    Belum ada laporan yang dibuat.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        <div class="table-responsive">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-no">No</th>
+                                        <th>Jenis Dokumen</th>
+                                        <th>Tanggal Laporan</th>
+                                        <th>Shift</th>
+                                        <th>Pengunggah</th>
+                                        <th class="col-aksi">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($groupReports ?? [] as $index => $report)
+                                        <tr>
+                                            <td class="col-no">{{ $groupReports instanceof \Illuminate\Pagination\LengthAwarePaginator ? $groupReports->firstItem() + $index : $index + 1 }}</td>
+                                            <td>
+                                                <div class="doc-type">
+                                                    <span class="doc-title">Laporan Shift</span>
+                                                    <span class="doc-id">ID: #{{ $report->id }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="date-info">
+                                                    <i class="fa-regular fa-calendar"></i>
+                                                    {{ \Carbon\Carbon::parse($report->report_date)->translatedFormat('d M Y') }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @php
+                                                    $shiftClass = match($report->shift) {
+                                                        'Pagi' => 'pagi',
+                                                        'Sore' => 'sore',
+                                                        'Malam' => 'malam',
+                                                        default => 'pagi'
+                                                    };
+                                                @endphp
+                                                <span class="badge-shift {{ $shiftClass }}">{{ $report->shift }}</span>
+                                            </td>
+                                            <!-- KOLOM PENGUNGGAH: Menampilkan Nama User dari Controller -->
+                                            <td>
+                                                <div style="font-weight: 600; color: var(--text-main);">{{ $report->user_name ?? Auth::user()->name }}</div>
+                                            </td>
+                                            <td class="col-aksi">
+                                                <div class="action-group">
+                                                    <a href="{{ route('reports.export_pdf', $report->id) }}" class="btn-icon view" title="Cetak PDF" target="_blank">
+                                                        <i class="fa-solid fa-print"></i>
+                                                    </a>
+                                                    <!-- Tombol Edit (Opsional) -->
+                                                    <!-- <a href="#" class="btn-icon edit"><i class="fa-solid fa-pencil"></i></a> -->
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="empty-state">
+                                                <i class="fa-regular fa-folder-open empty-icon"></i>
+                                                <br>Belum ada riwayat laporan dari Group Anda.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
 
-            <!-- Pagination -->
-            <div class="pagination-wrapper">
-                {{ $reports->links() }}
-            </div>
-        </div>
+                        <!-- Pagination untuk Tabel Riwayat -->
+                        @if(isset($groupReports) && $groupReports instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                            <div class="pagination-wrapper">
+                                {{ $groupReports->links() }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+            </div> <!-- End Tab Content Container -->
+        </div> <!-- End Tabs Wrapper -->
+
     </div>
 @endsection
 
 @push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.tab-item');
+        const panes = document.querySelectorAll('.tab-pane');
 
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 1. Remove active class from all tabs and panes
+                tabs.forEach(t => t.classList.remove('active'));
+                panes.forEach(p => p.classList.remove('active'));
+
+                // 2. Add active class to clicked tab
+                tab.classList.add('active');
+
+                // 3. Show target pane
+                const targetId = tab.getAttribute('data-target');
+                const targetPane = document.getElementById(targetId);
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                }
+            });
+        });
+    });
+</script>
 @endpush

@@ -14,6 +14,7 @@ return new class extends Migration
             $table->date('report_date');
             $table->string('shift'); // Pagi, Sore, Malam
             $table->string('group_name'); // A, B, C, D
+            $table->string('received_by_group'); // A, B, C, D
             $table->string('time_range'); // 07-15, etc
             $table->string('status')->default('draft'); // draft, submitted
             $table->timestamps();

@@ -66,6 +66,35 @@
     @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes fadeOut { to { transform: translateX(10px); opacity: 0; } }
     @keyframes progress { to { transform: scaleX(0); } }
+
+    /* --- FIX TAMPILAN BULAN DI KALENDER (FLATPICKR) --- */
+    /* Menambahkan style ini agar dropdown bulan terlihat jelas */
+    .flatpickr-current-month .flatpickr-monthDropdown-months {
+        display: inline-block !important;
+        appearance: none;
+        -webkit-appearance: none;
+        background: transparent;
+        border: none;
+        border-radius: 4px;
+        box-sizing: border-box;
+        color: inherit;
+        cursor: pointer;
+        font-size: inherit;
+        font-family: inherit;
+        font-weight: 700 !important;
+        height: auto;
+        line-height: inherit;
+        margin: 0 5px 0 0;
+        outline: none;
+        padding: 0 0 0 0.5ch;
+        position: relative;
+        vertical-align: initial;
+        width: auto;
+    }
+    .flatpickr-current-month .numInputWrapper {
+        width: 6ch;
+        display: inline-block;
+    }
 </style>
 @endpush
 
@@ -129,24 +158,46 @@
 @endsection
 
 @push('scripts')
+<!-- Load Locale Indonesia untuk Flatpickr -->
+<script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
+
 <script>
     // --- AMBIL DATA KARYAWAN DARI CONTROLLER ---
-    // Konversi Data PHP ke JavaScript Object
     const employeesGrouped = @json($employeesGrouped ?? []);
 
-    // --- LOGIC AUTO FILL EMPLOYEE ---
+    // --- HELPER: Init Flatpickr pada Element Tertentu (OPTIMASI AGAR TIDAK LAG) ---
+    // Fungsi ini menggantikan init global di dalam loop
+    function initFlatpickrOnElement(element) {
+        if (!element) return;
+
+        // Init Time Picker
+        element.querySelectorAll(".flatpickr-time").forEach(el => {
+            flatpickr(el, { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, disableMobile: false, allowInput: true });
+        });
+
+        // Init Time Only (Bongkar)
+        element.querySelectorAll(".flatpickr-time-only").forEach(el => {
+            flatpickr(el, { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, disableMobile: false });
+        });
+
+        // Init DateTime
+        element.querySelectorAll(".flatpickr-datetime").forEach(el => {
+            // Gunakan Locale ID agar nama bulan Indonesia
+            flatpickr(el, { enableTime: true, dateFormat: "Y-m-d H:i", altInput: true, altFormat: "j F Y, H:i", time_24hr: true, disableMobile: false, allowInput: true, locale: "id" });
+        });
+    }
+
+    // --- LOGIC AUTO FILL EMPLOYEE DENGAN DYNAMIC ROWS ---
     function autoFillEmployees() {
         const groupSelect = document.getElementById('group_name');
         const timeRangeSelect = document.getElementById('time_range');
-        const shiftBody = document.getElementById('shift-table-body'); // Target Table Body
+        const shiftBody = document.getElementById('shift-table-body');
 
-        // Pastikan elemen ada sebelum lanjut
         if (!groupSelect || !timeRangeSelect || !shiftBody) return;
 
-        const selectedGroup = groupSelect.value; // Contoh: "A"
-        const selectedTimeRange = timeRangeSelect.value; // Contoh: "07-15"
+        const selectedGroup = groupSelect.value;
+        const selectedTimeRange = timeRangeSelect.value;
 
-        // 1. Tentukan Jam Masuk & Pulang Berdasarkan Time Range
         let timeIn = '';
         let timeOut = '';
 
@@ -161,57 +212,58 @@
             timeOut = '07:00';
         }
 
-        // 2. Ambil Daftar Karyawan Berdasarkan Group
-        const groupKey = "Group " + selectedGroup;
-        let employees = [...(employeesGrouped[groupKey] || [])];
+        let employees = [];
+        if (selectedGroup) {
+            const groupKey = "Group " + selectedGroup;
+            employees = [...(employeesGrouped[groupKey] || [])];
 
-        // 3. SORTING BERDASARKAN NPK
-        employees.sort((a, b) => {
-            const npkA = a.npk || '';
-            const npkB = b.npk || '';
-            return npkA.localeCompare(npkB, undefined, { numeric: true, sensitivity: 'base' });
-        });
-
-        // 4. GENERATE BARIS TABLE SECARA DINAMIS
-        // Kosongkan tabel terlebih dahulu
-        shiftBody.innerHTML = '';
-
-        // Tentukan jumlah baris: Jika ada karyawan, gunakan jumlah karyawan. Jika tidak, default 14.
-        const rowCount = employees.length > 0 ? employees.length : 14;
-
-        for (let i = 0; i < rowCount; i++) {
-            const no = i + 1;
-            const employee = employees[i]; // Data karyawan (bisa undefined jika i >= employees.length)
-
-            const nameVal = employee ? employee.name : '';
-            const inVal = (employee && timeIn) ? timeIn : '';
-            const outVal = (employee && timeOut) ? timeOut : '';
-
-            // Buat HTML Row Baru
-            const rowHTML = `
-                <tr>
-                    <td class="text-center">${no}</td>
-                    <td><input type="text" class="form-control" name="shift_nama_${no}" value="${nameVal}"></td>
-                    <td><input type="text" class="form-control flatpickr-time" name="shift_masuk_${no}" value="${inVal}" placeholder="00:00"></td>
-                    <td><input type="text" class="form-control flatpickr-time" name="shift_pulang_${no}" value="${outVal}" placeholder="00:00"></td>
-                    <td><input type="text" class="form-control" name="shift_ket_${no}"></td>
-                </tr>
-            `;
-
-            // Append row ke body
-            shiftBody.insertAdjacentHTML('beforeend', rowHTML);
+            employees.sort((a, b) => {
+                const npkA = a.npk || '';
+                const npkB = b.npk || '';
+                return npkA.localeCompare(npkB, undefined, { numeric: true, sensitivity: 'base' });
+            });
         }
 
-        // 5. RE-INITIALIZE FLATPICKR PADA INPUT BARU
-        // Karena elemen input baru saja dibuat (dinamis), flatpickr harus dipanggil ulang
-        flatpickr(".flatpickr-time", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            time_24hr: true,
-            disableMobile: "true",
-            allowInput: true
-        });
+        const rowCount = employees.length > 0 ? employees.length : 14;
+        shiftBody.innerHTML = '';
+
+        // Gunakan Fragment atau string builder untuk performa
+        let htmlContent = '';
+        for (let i = 1; i <= rowCount; i++) {
+            const employee = employees[i - 1];
+            let valNama = '';
+            let valMasuk = '';
+            let valPulang = '';
+
+            if (employee) {
+                valNama = employee.name;
+                if(selectedTimeRange) {
+                    valMasuk = timeIn;
+                    valPulang = timeOut;
+                }
+            }
+
+            htmlContent += `
+                <tr>
+                    <td class="text-center">${i}</td>
+                    <td>
+                        <input type="text" class="form-control" name="shift_nama_${i}" value="${valNama}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control flatpickr-time" name="shift_masuk_${i}" placeholder="00:00" value="${valMasuk}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control flatpickr-time" name="shift_pulang_${i}" placeholder="00:00" value="${valPulang}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" name="shift_ket_${i}">
+                    </td>
+                </tr>
+            `;
+        }
+        shiftBody.innerHTML = htmlContent;
+        // Init Flatpickr hanya pada elemen baru ini (Optimasi)
+        initFlatpickrOnElement(shiftBody);
     }
 
     // --- LOGIC AUTO SYNC SHIFT TO TIME RANGE ---
@@ -259,12 +311,11 @@
             <div class="loading-info">
                 <div class="input-loading"><label>Kapasitas (Ton)</label><input type="number" name="capacity_${idSuffix}" placeholder="0"></div>
                 <div class="input-loading"><label>Nomor WO</label><input type="text" name="wo_number_${idSuffix}" placeholder="No. Work Order"></div>
-                <div class="input-loading"><label>Jenis Kargo</label><input type="text" name="cargo_type_${idSuffix}"></div>
-                <div class="input-loading"><label>Marking</label><input type="text" name="marking_${idSuffix}" placeholder="Kode Marking"></div>
+                <div class="input-loading"><label>Jenis Kargo</label><input type="text" name="cargo_type_${idSuffix}" placeholder="Pilih Jenis Marking"></div>
+                <div class="input-loading"><label>Marking</label><input type="text" name="marking_${idSuffix}" placeholder="Pilih Marking"></div>
             </div>
             <div class="loading-info">
-                <!-- UPDATED: Added autocomplete="off" -->
-                <div class="input-loading"><label>Waktu Sandar</label><input type="text" id="arrival_time_${idSuffix}" class="arrival-time-picker" placeholder="Pilih Waktu..." autocomplete="off"></div>
+                <div class="input-loading"><label>Tiba/Sandar</label><input type="text" id="arrival_time_${idSuffix}" class="arrival-time-picker" placeholder="Pilih Waktu..."></div>
                 <div class="input-loading"><label>Gang Operasi</label><input type="text" name="operating_gang_${idSuffix}" placeholder="Nama/No Gang"></div>
                 <div class="input-loading"><label>Jumlah TKBM</label><input type="number" name="tkbm_count_${idSuffix}" placeholder="0"></div>
                 <div class="input-loading"><label>Mandor</label><input type="text" name="foreman_${idSuffix}" placeholder="Nama Foreman"></div>
@@ -346,8 +397,7 @@
                     </div>
                     <div class="input-timesheet">
                         <div class="time-input-wrapper">
-                            <!-- UPDATED: Added autocomplete="off" -->
-                            <input type="tel" maxlength="5" id="time_delivery_${idSuffix}" class="time-input" placeholder="00:00" autocomplete="off">
+                            <input type="tel" maxlength="5" id="time_delivery_${idSuffix}" class="time-input" placeholder="00:00">
                             <button type="button" class="btn-set-now" id="btn-set-now-delivery-${idSuffix}"><i class="fa-regular fa-clock"></i></button>
                         </div>
                         <input type="text" id="kegiatan_delivery_${idSuffix}" class="activity-input" placeholder="Ketik Aktivitas...">
@@ -384,8 +434,7 @@
                     </div>
                     <div class="input-timesheet">
                         <div class="time-input-wrapper">
-                            <!-- UPDATED: Added autocomplete="off" -->
-                            <input type="tel" maxlength="5" id="time_loading_${idSuffix}" class="time-input" placeholder="00:00" autocomplete="off">
+                            <input type="tel" maxlength="5" id="time_loading_${idSuffix}" class="time-input" placeholder="00:00">
                             <button type="button" class="btn-set-now" id="btn-set-now-loading-${idSuffix}"><i class="fa-regular fa-clock" style="color: var(--green);"></i></button>
                         </div>
                         <input type="text" id="kegiatan_loading_${idSuffix}" class="activity-input" placeholder="Ketik Aktivitas...">
@@ -451,15 +500,13 @@
                     <label>Kapasitas / Partai (Ton)</label>
                     <input type="number" name="capacity_urea_${idSuffix}" placeholder="0">
                 </div>
-                <!-- UPDATED: Added autocomplete="off" -->
                 <div class="input-item">
-                    <label>Waktu Sandar</label>
-                    <input type="text" name="berthing_time_urea_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Waktu Sandar" autocomplete="off">
+                    <label>Tiba/Sandar</label>
+                    <input type="text" name="berthing_time_urea_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Tiba/Sandar">
                 </div>
-                <!-- UPDATED: Added autocomplete="off" -->
                 <div class="input-item">
                     <label>Mulai Muat</label>
-                    <input type="text" name="start_loading_time_urea_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Waktu Mulai" autocomplete="off">
+                    <input type="text" name="start_loading_time_urea_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Waktu Mulai">
                 </div>
             </div>
         </div>
@@ -477,8 +524,7 @@
                 <div class="input-laporan-harian d-flex align-items-center align-self-stretch"
                     style="padding: 15px; gap: 10px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-card);">
 
-                    <!-- UPDATED: Added autocomplete="off" -->
-                    <input type="text" id="input-datetime-urea-${idSuffix}" class="input-laporan flatpickr-datetime" style="width: 220px !important; flex-shrink: 0;" placeholder="Pilih Waktu" autocomplete="off">
+                    <input type="text" id="input-datetime-urea-${idSuffix}" class="input-laporan flatpickr-datetime" style="width: 220px !important; flex-shrink: 0;" placeholder="Pilih Waktu">
                     <input type="text" id="input-activity-urea-${idSuffix}" class="input-laporan" style="flex: 1; min-width: 0; width: auto !important;" placeholder="Ketik Aktivitas">
                     <input type="number" id="input-cob-urea-${idSuffix}" class="input-laporan" style="text-align: center; width:100px !important; flex-shrink: 0;" placeholder="COB">
 
@@ -499,47 +545,31 @@
 
     // 1. Inisialisasi Flatpickr
     function initPickers() {
-        flatpickr(".arrival-time-picker", {
-            enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true, disableMobile: false, allowInput: true
-        });
+        // Init elemen statis saja (Prevent Double Init)
+        initFlatpickrOnElement(document.body);
 
-        // --- UPDATED CONFIG FOR DATETIME (Use Confirm Plugin) ---
-        flatpickr(".flatpickr-datetime", {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
-            altInput: true,
-            altFormat: "j F Y, H:i",
-            time_24hr: true,
-            // PENTING: Pakai "true" string untuk disableMobile di JS agar memaksa UI Flatpickr di HP
-            // Ini memastikan fitur confirm button juga muncul di HP
-            disableMobile: "true",
-            allowInput: true,
-            // Plugin Confirm Date: Mencegah kalender tertutup sebelum user klik OK
-            plugins: [new confirmDatePlugin({
-                confirmIcon: "<i class='fa-solid fa-check'></i>",
-                confirmText: "OK ",
-                showAlways: true,
-                theme: "light"
-            })]
-        });
+        // CONFIG KHUSUS REPORT DATE (INFO UMUM)
+        const reportDateInput = document.querySelector("#report_date");
+        if (reportDateInput) {
+            flatpickr(reportDateInput, {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d/m/Y", // Tetap Format Angka dd/mm/yyyy
+                locale: "id",       // Locale ID agar nama bulan di kalender bahasa Indonesia
+                disableMobile: false,
+                allowInput: true,
+                // SET DEFAULT DATE KE WAKTU WITA (Via Carbon)
+                defaultDate: "{{ \Carbon\Carbon::now('Asia/Makassar')->format('Y-m-d') }}"
+            });
+        }
 
-        flatpickr(".flatpickr-time-only", {
-            enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, disableMobile: false, allowInput: true
-        });
-        flatpickr(".flatpickr-time", {
-            enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, disableMobile: false, allowInput: true
-        });
-
-        // Auto-format input jam
-        // Kita pasang listener global di body agar elemen dinamis juga kena
+        // Hapus listener lama jika ada (untuk mencegah duplikasi jika dipanggil ulang)
         document.body.removeEventListener('input', handleTimeMasking);
+        // Pasang listener global untuk input time masking
         document.body.addEventListener('input', handleTimeMasking);
     }
 
     // --- GLOBAL TIME MASKING HANDLER ---
-    // Logika ini akan mendengarkan semua input di halaman
-    // Jika input memiliki class time-input, flatpickr-time, atau flatpickr-time-only
-    // maka akan otomatis diformat 1230 -> 12:30
     function handleTimeMasking(e) {
         if (e.target.matches('.time-input, .flatpickr-time, .flatpickr-time-only')) {
             let value = e.target.value.replace(/[^0-9]/g, '');
@@ -550,7 +580,6 @@
                 formatted = value.substring(0, 2) + ':' + value.substring(2);
             }
 
-            // Hanya update jika format berubah agar cursor tidak lompat-lompat aneh
             if (e.target.value !== formatted) {
                 e.target.value = formatted;
             }
@@ -638,39 +667,11 @@
     }
     document.addEventListener('DOMContentLoaded', () => setupCustomSelects());
 
-    // --- DARK MODE TOGGLE ---
-    const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
-    const currentTheme = localStorage.getItem('theme');
-    if (currentTheme) {
-        document.documentElement.setAttribute('data-theme', currentTheme);
-        if (currentTheme === 'dark' && toggleSwitch) toggleSwitch.checked = true;
-    }
-    function switchTheme(e) {
-        if (e.target.checked) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-            localStorage.setItem('theme', 'light');
-        }
-    }
-    if(toggleSwitch) toggleSwitch.addEventListener('change', switchTheme, false);
-
-    // --- FLATPICKR GLOBAL CONFIG ---
-    flatpickr("#report_date", {
-        dateFormat: "Y-m-d", // Format ke database (YYYY-MM-DD)
-        altInput: true,      // Aktifkan tampilan alternatif
-        altFormat: "d/m/Y",  // Format yang dilihat user (DD/MM/YYYY)
-        disableMobile: false,
-        allowInput: true,
-        defaultDate: "today"
-    });
-
     // --- HELPER FUNCTIONS ---
     function setupTimesheet(timeId, activityId, btnAddId, listId, btnSetNowId) {
         const timeInput = document.getElementById(timeId);
         const btnAdd = document.getElementById(btnAddId);
-        flatpickr(timeInput, { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, allowInput: true, disableMobile: false });
+        // Hapus init flatpickr disini karena sudah dihandle initPickers global
         if(btnSetNowId) {
             const btnSet = document.getElementById(btnSetNowId);
             if(btnSet) {
@@ -684,94 +685,81 @@
                 });
             }
         }
-    if(btnAdd){
-        btnAdd.addEventListener('click', function() {
-            const inputActivity = document.getElementById(activityId);
-            let timeVal = timeInput.value;
-            let activityVal = inputActivity.value;
-            const suffix = this.getAttribute('data-suffix');
-            const cat = this.getAttribute('data-category');
+        if(btnAdd){
+            btnAdd.addEventListener('click', function() {
+                const inputActivity = document.getElementById(activityId);
+                let timeVal = timeInput.value;
+                let activityVal = inputActivity.value;
+                const suffix = this.getAttribute('data-suffix');
+                const cat = this.getAttribute('data-category');
 
-            if (timeVal === '' || activityVal === '') { alert('Mohon isi Jam dan Kegiatan'); return; }
-            const category = listId.includes('delivery') ? 'delivery' : 'loading';
-            let color = 'var(--blue-kss)';
-            if(listId.includes('loading')) color = 'var(--green)';
+                if (timeVal === '' || activityVal === '') { alert('Mohon isi Jam dan Kegiatan'); return; }
+                const idx = Date.now();
+                let color = listId.includes('loading') ? 'var(--green)' : 'var(--blue-kss)';
 
-            // Generate Unique Index ID agar Time dan Activity terkelompok menjadi satu
-            const idx = Date.now();
+                let newItemHTML = `
+                    <div class="timesheet-item">
+                        <div class="d-flex align-items-start w-100">
+                            <div class="ts-dot" style="background-color: ${color};"></div>
+                            <div style="display:flex; flex-direction:column; flex:1; gap:5px;">
+                                <span class="ts-time-badge" style="color: ${color};">${timeVal}</span>
+                                <div class="ts-content">${activityVal}</div>
 
-            let newItemHTML = `
-                <div class="timesheet-item">
-                    <div class="d-flex align-items-start w-100">
-                        <div class="ts-dot" style="background-color: ${color};"></div>
-                        <div style="display:flex; flex-direction:column; flex:1; gap:5px;">
-                            <span class="ts-time-badge" style="color: ${color};">${timeVal}</span>
-                            <div class="ts-content">${activityVal}</div>
+                                <input type="hidden" name="timesheets[${suffix}][${cat}][${idx}][time]" value="${timeVal}">
+                                <input type="hidden" name="timesheets[${suffix}][${cat}][${idx}][activity]" value="${activityVal}">
 
-                            <input type="hidden" name="timesheets[${suffix}][${cat}][${idx}][time]" value="${timeVal}">
-                            <input type="hidden" name="timesheets[${suffix}][${cat}][${idx}][activity]" value="${activityVal}">
-
+                            </div>
+                            <i class="fa-solid fa-trash-can ts-delete" onclick="this.closest('.timesheet-item').remove()"></i>
                         </div>
-                        <i class="fa-solid fa-trash-can ts-delete" onclick="this.closest('.timesheet-item').remove()"></i>
-                    </div>
-                </div>`;
-            document.getElementById(listId).insertAdjacentHTML('beforeend', newItemHTML);
-            timeInput.value = '';
-            inputActivity.value = '';
+                    </div>`;
+                document.getElementById(listId).insertAdjacentHTML('beforeend', newItemHTML);
+                timeInput.value = '';
+                inputActivity.value = '';
+            });
+        }
+    }
+
+    function setupAccumulationLogic(suffix) {
+        ['delivery', 'loading', 'damage'].forEach(type => {
+            const currentInput = document.querySelector(`input[name="qty_${type}_current_${suffix}"]`);
+            const prevInput = document.querySelector(`input[name="qty_${type}_prev_${suffix}"]`);
+            const accumSpan = document.querySelector(`.qty_${type}_accumulated_${suffix}`);
+            if(currentInput && prevInput && accumSpan) {
+                const calculate = () => { accumSpan.textContent = (parseFloat(currentInput.value)||0) + (parseFloat(prevInput.value)||0); };
+                currentInput.addEventListener('input', calculate);
+                prevInput.addEventListener('input', calculate);
+            }
         });
     }
-}
 
-function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
-    const btnAddBulk = document.getElementById(btnId);
-    const timelineContainer = document.getElementById(containerId);
-    if(btnAddBulk) {
-        btnAddBulk.addEventListener('click', function() {
-            // ... (validasi input) ...
-            const datetimeInput = document.getElementById(datetimeId);
-            const activityInput = document.getElementById(activityId);
-            const cobInput = document.getElementById(cobId);
-            const datetimeVal = datetimeInput.value;
-            const activityVal = activityInput.value;
-            const cobVal = cobInput.value;
-            const suffix = this.getAttribute('data-suffix');
+    function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
+        const btnAddBulk = document.getElementById(btnId);
+        const timelineContainer = document.getElementById(containerId);
+        if(btnAddBulk) {
+            btnAddBulk.addEventListener('click', function() {
+                const datetimeInput = document.getElementById(datetimeId);
+                const activityInput = document.getElementById(activityId);
+                const cobInput = document.getElementById(cobId);
+                const suffix = this.getAttribute('data-suffix');
 
-            if (!datetimeVal || !activityVal) { alert("Mohon lengkapi data Waktu dan Aktivitas."); return; }
+                if (!datetimeInput.value || !activityInput.value) { alert("Mohon lengkapi data Waktu dan Aktivitas."); return; }
 
-            // ... (formatting date) ...
-            let dateFormatted = datetimeVal;
-            // (gunakan logika formatting sebelumnya)
+                const newItem = document.createElement('div'); newItem.classList.add('timeline-item');
+                const cobHtml = cobInput.value ? `<span class="label-cob">COB : ${cobInput.value}</span>` : '';
+                const idx = Date.now();
 
-            const newItem = document.createElement('div');
-            newItem.classList.add('timeline-item');
-            const cobHtml = cobVal ? `<span class="label-cob">COB : ${cobVal}</span>` : '';
-
-            // Generate Unique Index ID
-            const idx = Date.now();
-
-            const hiddenInputs = `
-                <input type="hidden" name="bulk_logs[${suffix}][${idx}][time]" value="${datetimeVal}">
-                <input type="hidden" name="bulk_logs[${suffix}][${idx}][activity]" value="${activityVal}">
-                <input type="hidden" name="bulk_logs[${suffix}][${idx}][cob]" value="${cobVal}">
-            `;
-
-            newItem.innerHTML = `
-                <div class="timeline-header">
-                    <div class="timeline-dot"></div>
-                    <span class="timeline-time">${dateFormatted}</span>
-                </div>
-                <div class="timeline-content">
-                    ${cobHtml}
-                    <span class="text-activity">${activityVal}</span>
-                    ${hiddenInputs}
-                </div>
-            `;
-            timelineContainer.insertBefore(newItem, timelineContainer.firstChild);
-            activityInput.value = '';
-            cobInput.value = '';
-        });
+                newItem.innerHTML = `
+                    <div class="timeline-header"><div class="timeline-dot"></div><span class="timeline-time">${datetimeInput.value}</span></div>
+                    <div class="timeline-content">${cobHtml}<span class="text-activity">${activityInput.value}</span>
+                        <input type="hidden" name="bulk_logs[${suffix}][${idx}][time]" value="${datetimeInput.value}">
+                        <input type="hidden" name="bulk_logs[${suffix}][${idx}][activity]" value="${activityInput.value}">
+                        <input type="hidden" name="bulk_logs[${suffix}][${idx}][cob]" value="${cobInput.value}">
+                    </div>`;
+                timelineContainer.insertBefore(newItem, timelineContainer.firstChild);
+                activityInput.value = ''; cobInput.value = '';
+            });
+        }
     }
-}
 
     // --- TAB SWITCH LOGIC FOR BONGKAR ---
     function switchBongkarTab(type) {
@@ -781,15 +769,11 @@ function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
         const contentContainer = document.getElementById('content-bongkar-container');
 
         if (type === 'bahan') {
-            tabBahan.classList.add('active');
-            tabContainer.classList.remove('active');
-            contentBahan.classList.remove('d-none');
-            contentContainer.classList.add('d-none');
+            tabBahan.classList.add('active'); tabContainer.classList.remove('active');
+            contentBahan.classList.remove('d-none'); contentContainer.classList.add('d-none');
         } else {
-            tabContainer.classList.add('active');
-            tabBahan.classList.remove('active');
-            contentContainer.classList.remove('d-none');
-            contentBahan.classList.add('d-none');
+            tabContainer.classList.add('active'); tabBahan.classList.remove('active');
+            contentContainer.classList.remove('d-none'); contentBahan.classList.add('d-none');
         }
     }
 
@@ -834,6 +818,7 @@ function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
     function addContainerRow() {
         containerRowCount++;
         const tr = document.createElement('tr');
+        // MODIFIKASI: Menggunakan class 'flatpickr-time-only' dan init khusus agar hanya jam (noCalendar: true)
         tr.innerHTML = `
             <td class="align-middle row-num">${containerRowCount}</td>
             <td><input type="text" class="form-control flatpickr-time-only" name="unloading_containers[${containerRowCount}][time]" placeholder="00:00"></td>
@@ -844,7 +829,16 @@ function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
             <td class="align-middle"><button type="button" class="btn-delete-row" onclick="removeContainerRow(this)"><i class="fa-solid fa-trash-can"></i></button></td>
         `;
         containerTableBody.appendChild(tr);
-        flatpickr(tr.querySelector('.flatpickr-time-only'), { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, disableMobile: false });
+
+        // MODIFIKASI: Pastikan enableTime: true, noCalendar: true, time_24hr: true
+        flatpickr(tr.querySelector('.flatpickr-time-only'), {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            disableMobile: false
+        });
+
         setupCustomSelects(tr.querySelector('select'));
         attachCalcEventContainer(tr);
     }
@@ -893,8 +887,8 @@ function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
     }
 
     // --- GUDANG CEK UNIT LOGIC ---
-    const vehicleData = @json($vehicles);
-    const inventoryData = @json($inventories);
+    const vehicleData = @json($vehicles ?? []);
+    const inventoryData = @json($inventories ?? []);
 
     // Untuk Shelter Data, biarkan hardcode jika tidak ada tabel masternya
     const shelterData = [
@@ -938,19 +932,83 @@ function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
         for (let i = 1; i <= 7; i++) {
             operasiBody.innerHTML += `<tr><td>${i}</td><td><input type="text" class="form-control" name="lembur_${i}" placeholder="Nama Karyawan"></td><td>${i + 7}</td><td><input type="text" class="form-control" name="relief_${i + 7}" placeholder="Nama Karyawan"></td></tr>`;
         }
+
         // 2. Karyawan Shift
-        const shiftBody = document.getElementById('shift-table-body');
-        for (let i = 1; i <= 14; i++) {
-            shiftBody.innerHTML += `<tr><td class="text-center">${i}</td><td><input type="text" class="form-control" name="shift_nama_${i}"></td><td><input type="text" class="form-control flatpickr-time" name="shift_masuk_${i}" placeholder="00:00"></td><td><input type="text" class="form-control flatpickr-time" name="shift_pulang_${i}" placeholder="00:00"></td><td><input type="text" class="form-control" name="shift_ket_${i}"></td></tr>`;
-        }
+        // MODIFIED: Dipindahkan ke autoFillEmployees() untuk dynamic rows.
+        // Fungsi ini hanya akan dipanggil 1x untuk inisiasi awal jika diperlukan, atau
+        // biarkan kosong dulu dan panggil autoFillEmployees() di akhir DOMContentLoaded.
+        // Agar konsisten, kita panggil autoFillEmployees() nanti.
+
         // 3. Kegiatan Lain
         const lainBody = document.getElementById('lain-table-body');
         for (let i = 1; i <= 5; i++) {
             lainBody.innerHTML += `<tr><td><textarea class="form-control" name="kegiatan_desc_${i}" placeholder="Deskripsi kegiatan..."></textarea></td><td><input type="text" class="form-control" name="kegiatan_personil_${i}"></td><td><input type="text" class="form-control flatpickr-time" name="kegiatan_jam_${i}" placeholder="00:00"></td></tr>`;
         }
 
+        // --- TAMBAHAN BARU: GENERATE DEFAULT ROWS FOR OP.7 & PENGGANTI ---
+        const op7DataDefaults = [
+            { f: "FL.KSS-100", a: "P.6" },
+            { f: "FL.KSS-101", a: "Popka" },
+            { f: "FL.KSS-102", a: "Bagging-1" },
+            { f: "FL.KSS-104", a: "Bagging-1" },
+            { f: "FL.KSS-105", a: "Bagging-2" },
+            { f: "FL.KSS-106", a: "Bagging-2" },
+            { f: "FL.KSS-108", a: "Gudang Produk Tursina" },
+            { f: "FL.KSS-109", a: "Blending" },
+            { f: "FL.KSS-103", a: "Blending" },
+            { f: "FL.KSS-107", a: "Blending" },
+            { f: "FL.KSS-110", a: "Blending" }
+        ];
+        op7DataDefaults.forEach(item => addOp7Row(item.f, item.a));
+
+        for(let i=0; i<3; i++) addReplacementRow();
+
         // Re-init flatpickr for new inputs
-        flatpickr(".flatpickr-time", { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, disableMobile: false, allowInput: true });
+        // flatpickr(".flatpickr-time", { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, disableMobile: false, allowInput: true });
+        initFlatpickrOnElement(lainBody);
+    }
+
+    // --- TAMBAHAN BARU: FUNGSI UNTUK OP.7 & PENGGANTI ---
+    let op7RowCount = 0;
+    function addOp7Row(forkliftVal = '', areaVal = '') {
+        const tbody = document.getElementById('op7-table-body');
+        if(!tbody) return; // Guard clause
+        op7RowCount++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="text-center align-middle">${op7RowCount}</td>
+            <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][name]" placeholder="Nama"></td>
+            <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][no_forklift_]" value="${forkliftVal}" placeholder="No Forklift"></td>
+            <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][work_area]" value="${areaVal}" placeholder="Area"></td>
+            <td><input type="text" class="form-control flatpickr-time" name="op7_logs[${op7RowCount}][time_in]" placeholder="00:00"></td>
+            <td><input type="text" class="form-control flatpickr-time" name="op7_logs[${op7RowCount}][time_out]" placeholder="00:00"></td>
+            <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][description]" placeholder="Ket."></td>
+            <td class="align-middle text-center"><i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--redcolor);" onclick="this.closest('tr').remove()"></i></td>
+        `;
+        tbody.appendChild(tr);
+        initFlatpickrOnElement(tr); // Init hanya untuk baris baru
+    }
+
+    let replacementRowCount = 0;
+    function addReplacementRow() {
+        const tbody = document.getElementById('replacement-table-body');
+        if(!tbody) return;
+        replacementRowCount++;
+        const tr = document.createElement('tr');
+        // --- MODIFIKASI: MENYAMAKAN KOLOM DENGAN OP7 ---
+        tr.innerHTML = `
+            <td class="text-center align-middle">${replacementRowCount}</td>
+            <td><input type="text" class="form-control" name="replacement_logs[${replacementRowCount}][name]" placeholder="Nama"></td>
+            <td><input type="text" class="form-control" name="replacement_logs[${replacementRowCount}][no_forklift_]" placeholder="No Forklift"></td>
+            <td><input type="text" class="form-control" name="replacement_logs[${replacementRowCount}][work_area]" placeholder="Area"></td>
+            <td><input type="text" class="form-control flatpickr-time" name="replacement_logs[${replacementRowCount}][time_in]" placeholder="00:00"></td>
+            <td><input type="text" class="form-control flatpickr-time" name="replacement_logs[${replacementRowCount}][time_out]" placeholder="00:00"></td>
+            <td><input type="text" class="form-control" name="replacement_logs[${replacementRowCount}][description]" placeholder="Ket."></td>
+            <td class="align-middle text-center"><i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--redcolor);" onclick="this.closest('tr').remove()"></i></td>
+        `;
+        tbody.appendChild(tr);
+        // --- MODIFIKASI: INIT FLATPICKR UNTUK BARIS BARU ---
+        initFlatpickrOnElement(tr);
     }
 
     function setAllGood(type) {
@@ -982,6 +1040,9 @@ function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
             container.innerHTML = getFormHTML(seq);
             setupTimesheet(`time_delivery_${seq}`, `kegiatan_delivery_${seq}`, `btn-add-delivery-${seq}`, `list-delivery-${seq}`, `btn-set-now-delivery-${seq}`);
             setupTimesheet(`time_loading_${seq}`, `kegiatan_loading_${seq}`, `btn-add-loading-${seq}`, `list-loading-${seq}`, `btn-set-now-loading-${seq}`);
+
+            // --- PANGGIL FUNGSI AKUMULASI DI SINI ---
+            setupAccumulationLogic(seq);
         }
     });
     ['1', '2'].forEach(seq => {
@@ -1003,6 +1064,9 @@ function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
         renderTables();
         renderKaryawanTables();
 
+        // Panggil autoFillEmployees satu kali untuk render default rows (14 baris kosong)
+        autoFillEmployees();
+
         // --- TAMBAHAN EVENT LISTENER UNTUK AUTO FILL ---
         // Pasang listener setelah tabel di-render
         const groupSelect = document.getElementById('group_name');
@@ -1023,9 +1087,10 @@ function setupBulkLog(btnId, datetimeId, activityId, cobId, containerId) {
                 // yang kemudian akan memanggil autoFillEmployees secara berantai.
             });
         }
-    });
 
-    initPickers();
+        // Panggil initPickers terakhir
+        initPickers();
+    });
 
     // --- TAB TOGGLE LOGIC (Unified) ---
     document.querySelectorAll('.activities-tab').forEach(tab => {

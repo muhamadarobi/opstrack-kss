@@ -57,4 +57,20 @@ class DailyReport extends Model
     {
         return $this->hasMany(EmployeeLog::class);
     }
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // Relasi 2: Petugas Penerima (Shift Berikutnya)
+    public function receiver()
+    {
+        return $this->belongsTo(User::class, 'received_by_user_id');
+    }
+
+    // Relasi 3: Manajer
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 }

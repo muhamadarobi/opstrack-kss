@@ -122,7 +122,7 @@
 
             <!-- TENGAH: LOGO (20%) -->
             <td style="width: 20%; vertical-align: top; text-align: center;">
-                <img src="{{ public_path('assets/Logo-compressed 1.png') }}" alt="Logo KSS" class="logo-img">
+                <img src="{{ public_path('assets/KSS.png') }}" alt="Logo KSS" class="logo-img">
             </td>
 
             <!-- KANAN: INFO UMUM (40%) -->
@@ -541,21 +541,25 @@
         <div class="section-header">VI. KARYAWAN</div>
         <table class="w-100">
             <tr>
-                <!-- KIRI: KARYAWAN SHIFT -->
+                <!-- KIRI: KARYAWAN SHIFT (DYNAMIC ROWS) -->
                 <td class="w-50" style="padding-right: 2px; vertical-align: top;">
                     <table class="table-bordered w-100">
                         <tr class="bg-gray"><th colspan="5" class="text-left" style="padding-left: 5px;">KARYAWAN SHIFT YANG BERTUGAS</th></tr>
                         <tr class="bg-gray"><th style="width: 15px;">NO.</th><th>NAMA</th><th>MASUK</th><th>PULANG</th><th>KET</th></tr>
                         @php $shiftEmps = $report->employeeLogs->where('category', 'shift')->values(); @endphp
-                        @for($i=0; $i<14; $i++)
+                        @foreach($shiftEmps as $index => $emp)
                         <tr>
-                            <td class="text-center">{{ $i+1 }}</td>
-                            <td>{{ isset($shiftEmps[$i]) ? $shiftEmps[$i]->name : '' }}</td>
-                            <td class="text-center">{{ isset($shiftEmps[$i]) ? \Carbon\Carbon::parse($shiftEmps[$i]->time_in)->format('H:i') : '' }}</td>
-                            <td class="text-center">{{ isset($shiftEmps[$i]) ? \Carbon\Carbon::parse($shiftEmps[$i]->time_out)->format('H:i') : '' }}</td>
-                            <td>{{ isset($shiftEmps[$i]) ? $shiftEmps[$i]->description : '' }}</td>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td>{{ $emp->name }}</td>
+                            <td class="text-center">{{ $emp->time_in ? \Carbon\Carbon::parse($emp->time_in)->format('H:i') : '' }}</td>
+                            <td class="text-center">{{ $emp->time_out ? \Carbon\Carbon::parse($emp->time_out)->format('H:i') : '' }}</td>
+                            <td>{{ $emp->description }}</td>
                         </tr>
-                        @endfor
+                        @endforeach
+                        {{-- Fallback if no employees found --}}
+                        @if($shiftEmps->count() == 0)
+                             <tr><td class="text-center">1</td><td></td><td></td><td></td><td></td></tr>
+                        @endif
                     </table>
                 </td>
                 <!-- KANAN: OPERASI & LAIN -->

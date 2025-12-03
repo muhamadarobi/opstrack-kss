@@ -144,8 +144,7 @@
     <!-- I. PEMUATAN PUPUK KANTONG -->
     <div class="section-header">I. PEMUATAN PUPUK KANTONG</div>
 
-    @for($i = 1; $i <= 5; $i++)
-        @php $activity = $report->loadingActivities->where('sequence', $i)->first(); @endphp
+    @foreach($report->loadingActivities->sortBy('sequence') as $activity)
         <div class="activity-box">
             <!-- INFO ATAS -->
             <table class="w-100" style="margin-bottom: 0;">
@@ -153,31 +152,31 @@
                     <!-- KIRI -->
                     <td style="width: 34%; border-right: 0.5px solid black; padding: 2px; vertical-align: top;">
                         <table class="w-100 no-border">
-                            <tr><td style="width: 15px;"><b>{{ $i }}.</b></td><td class="label-col">Nama Kapal</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->ship_name ?? '' }}</td></tr>
+                            <tr><td style="width: 15px;"><b>{{ $activity->sequence }}.</b></td><td class="label-col">Nama Kapal</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->ship_name ?? '' }}</td></tr>
                             <tr><td></td><td>Agent</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->agent ?? '' }}</td></tr>
                             <tr><td></td><td>Dermaga</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->jetty ?? '' }}</td></tr>
                             <tr><td></td><td>Tujuan</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->destination ?? '' }}</td></tr>
                         </table>
                         <div style="font-weight: bold; margin-top: 2px; margin-left: 5px;">a. Pengiriman</div>
                         <table class="w-100 no-border" style="margin-left: 5px; width: 95%;">
-                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_delivery_current, 0) : '' }}</td><td style="width: 15px;">Ton</td></tr>
-                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_delivery_prev, 0) : '' }}</td><td>Ton</td></tr>
-                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_delivery_current + $activity->qty_delivery_prev, 0) : '' }}</td><td>Ton</td></tr>
+                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_delivery_current, 0) }}</td><td style="width: 15px;">Ton</td></tr>
+                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_delivery_prev, 0) }}</td><td>Ton</td></tr>
+                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_delivery_current + $activity->qty_delivery_prev, 0) }}</td><td>Ton</td></tr>
                         </table>
                     </td>
                     <!-- TENGAH -->
                     <td style="width: 33%; border-right: 0.5px solid black; padding: 2px; vertical-align: top;">
                         <table class="w-100 no-border">
-                            <tr><td class="label-col">Kapasitas</td><td class="sep-col">:</td><td class="border-bottom text-right">{{ isset($activity) && $activity->capacity ? number_format($activity->capacity, 0) : '' }}</td><td style="width: 15px;">Ton</td></tr>
+                            <tr><td class="label-col">Kapasitas</td><td class="sep-col">:</td><td class="border-bottom text-right">{{ $activity->capacity ? number_format($activity->capacity, 0) : '' }}</td><td style="width: 15px;">Ton</td></tr>
                             <tr><td class="label-col">No. WO/SO</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ $activity->wo_number ?? '' }}</td></tr>
                             <tr><td class="label-col">Jenis</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ $activity->cargo_type ?? '' }}</td></tr>
                             <tr><td class="label-col">Marking</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ $activity->marking ?? '' }}</td></tr>
                         </table>
                         <div style="font-weight: bold; margin-top: 2px; margin-left: 5px;">b. Pemuatan</div>
                         <table class="w-100 no-border" style="margin-left: 5px; width: 95%;">
-                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_loading_current, 0) : '' }}</td><td style="width: 15px;">Ton</td></tr>
-                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_loading_prev, 0) : '' }}</td><td>Ton</td></tr>
-                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_loading_current + $activity->qty_loading_prev, 0) : '' }}</td><td>Ton</td></tr>
+                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_loading_current, 0) }}</td><td style="width: 15px;">Ton</td></tr>
+                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_loading_prev, 0) }}</td><td>Ton</td></tr>
+                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_loading_current + $activity->qty_loading_prev, 0) }}</td><td>Ton</td></tr>
                         </table>
                     </td>
                     <!-- KANAN -->
@@ -185,14 +184,14 @@
                         <table class="w-100 no-border">
                             <tr><td class="label-col">Tiba/Sandar</td><td class="sep-col">:</td><td class="border-bottom">{{ isset($activity->arrival_time) ? \Carbon\Carbon::parse($activity->arrival_time)->format('d/m H:i') : '' }}</td></tr>
                             <tr><td class="label-col">Gang Ops</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->operating_gang ?? '' }}</td></tr>
-                            <tr><td class="label-col">Jml TKBM</td><td class="sep-col">:</td><td class="border-bottom">{{ isset($activity) ? $activity->tkbm_count . ' Orang' : '' }}</td></tr>
+                            <tr><td class="label-col">Jml TKBM</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->tkbm_count ? $activity->tkbm_count . ' Orang' : '' }}</td></tr>
                             <tr><td class="label-col">Mandor</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->foreman ?? '' }}</td></tr>
                         </table>
                         <div style="font-weight: bold; margin-top: 2px; margin-left: 5px;">c. Kerusakan</div>
                         <table class="w-100 no-border" style="margin-left: 5px; width: 95%;">
-                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_damage_current, 0) : '' }}</td><td style="width: 15px;">Ton</td></tr>
-                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_damage_prev, 0) : '' }}</td><td>Ton</td></tr>
-                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ isset($activity) ? number_format($activity->qty_damage_current + $activity->qty_damage_prev, 0) : '' }}</td><td>Ton</td></tr>
+                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_damage_current, 0) }}</td><td style="width: 15px;">Ton</td></tr>
+                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_damage_prev, 0) }}</td><td>Ton</td></tr>
+                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_damage_current + $activity->qty_damage_prev, 0) }}</td><td>Ton</td></tr>
                         </table>
                     </td>
                 </tr>
@@ -206,8 +205,12 @@
                     <td class="w-50 border-right" style="padding:0; vertical-align: top;">
                         <table class="w-100 table-bordered no-border">
                             <tr><th style="width: 15%;">JAM</th><th>PENGIRIMAN</th></tr>
-                            @php $dLogs = isset($activity) ? $activity->timesheets->where('category', 'delivery')->values() : collect([]); @endphp
-                            @for($r=0; $r<3; $r++)
+                            @php
+                                $dLogs = $activity->timesheets->where('category', 'delivery')->values();
+                                $lLogs = $activity->timesheets->where('category', 'loading')->values();
+                                $maxRows = max(3, $dLogs->count(), $lLogs->count());
+                            @endphp
+                            @for($r=0; $r < $maxRows; $r++)
                             <tr>
                                 <td class="text-center" style="height: 10px;">{{ isset($dLogs[$r]) ? \Carbon\Carbon::parse($dLogs[$r]->time)->format('H:i') : '' }}</td>
                                 <td>{{ isset($dLogs[$r]) ? $dLogs[$r]->activity : '' }}</td>
@@ -226,8 +229,7 @@
                     <td class="w-50" style="padding:0; vertical-align: top;">
                         <table class="w-100 table-bordered no-border">
                             <tr><th style="width: 15%;">JAM</th><th>PEMUATAN</th></tr>
-                            @php $lLogs = isset($activity) ? $activity->timesheets->where('category', 'loading')->values() : collect([]); @endphp
-                            @for($r=0; $r<3; $r++)
+                            @for($r=0; $r < $maxRows; $r++)
                             <tr>
                                 <td class="text-center" style="height: 10px;">{{ isset($lLogs[$r]) ? \Carbon\Carbon::parse($lLogs[$r]->time)->format('H:i') : '' }}</td>
                                 <td>{{ isset($lLogs[$r]) ? $lLogs[$r]->activity : '' }}</td>
@@ -238,34 +240,34 @@
                         <!-- UPDATED: Font size jadi 7pt -->
                         <table class="w-100 no-border" style="font-size: 7pt; border-top: 0.5px solid black;">
                             <tr>
-                                <td style="width: 50px;">Tally Kapal</td><td class="sep-col">:</td><td style="width: 70px;">{{ $activity->tally_ship ?? '' }}</td>
+                                <td style="width: 75px;">Tally Kapal</td><td class="sep-col">:</td><td style="width: 60px;">{{ $activity->tally_ship ?? '' }}</td>
                                 <td style="width: 40px;">Operator</td><td class="sep-col">:</td><td>{{ $activity->operator_ship ?? '' }}</td>
+                                <td>Forklift</td><td class="sep-col">:</td><td>{{ $activity->forklift_ship ?? '' }}</td>
                             </tr>
                             <tr>
-                                <td>Op. Gudang</td><td class="sep-col">:</td><td>{{ $activity->operator_warehouse ?? '' }}</td>
-                                <td>Forklift</td><td class="sep-col">:</td><td>{{ $activity->forklift_ship ?? '' }}</td>
+                                <td style="white-space: nowrap;">Operator Gudang</td><td class="sep-col">:</td><td>{{ $activity->operator_warehouse ?? '' }}</td>
+                                <td>Forklift</td><td class="sep-col">:</td><td>{{ $activity->forklift_warehouse ?? '' }}</td>
                             </tr>
                         </table>
                     </td>
                 </tr>
             </table>
         </div>
-    @endfor
+    @endforeach
 
     <!-- II. PEMUATAN UREA CURAH -->
     <div class="section-header">II. PEMUATAN UREA CURAH</div>
-    @for($i = 1; $i <= 3; $i++)
-        @php $bulk = $report->bulkLoadingActivities->where('sequence', $i)->first(); @endphp
+    @foreach($report->bulkLoadingActivities->sortBy('sequence') as $bulk)
         <div class="activity-box">
             <table class="w-100 no-border">
                 <tr>
                     <td style="width: 50%; vertical-align: top; border-right: 0.5px solid black; padding: 2px;">
                         <table class="w-100">
                             <!-- UPDATED: Width Nama Kapal diperlebar jadi 70px -->
-                            <tr><td style="width: 15px;"><b>{{ $i }}.</b></td><td style="width: 70px;">Nama Kapal</td><td class="sep-col">:</td><td>{{ $bulk->ship_name ?? '' }}</td></tr>
+                            <tr><td style="width: 15px;"><b>{{ $bulk->sequence }}.</b></td><td style="width: 70px;">Nama Kapal</td><td class="sep-col">:</td><td>{{ $bulk->ship_name ?? '' }}</td></tr>
                             <tr><td></td><td>Agent</td><td class="sep-col">:</td><td>{{ $bulk->agent ?? '' }}</td></tr>
                             <tr><td></td><td>Jenis Urea</td><td class="sep-col">:</td><td>{{ $bulk->commodity ?? '' }}</td></tr>
-                            <tr><td></td><td>Kapasitas</td><td class="sep-col">:</td><td>{{ isset($bulk) ? number_format($bulk->capacity, 0) . ' MT' : '' }}</td></tr>
+                            <tr><td></td><td>Kapasitas</td><td class="sep-col">:</td><td>{{ number_format($bulk->capacity, 0) }} MT</td></tr>
                         </table>
                     </td>
                     <td style="width: 50%; vertical-align: top; padding: 2px;">
@@ -282,7 +284,7 @@
                 <tr class="bg-gray">
                     <th style="width: 15%;">TANGGAL</th><th style="width: 10%;">JAM</th><th>URAIAN KEGIATAN</th><th style="width: 10%;">COB</th>
                 </tr>
-                @php $bLogs = isset($bulk) ? $bulk->logs : collect([]); @endphp
+                @php $bLogs = $bulk->logs; @endphp
                 @foreach($bLogs as $log)
                 <tr>
                     <td class="text-center">{{ \Carbon\Carbon::parse($log->datetime)->translatedFormat('d M Y') }}</td>
@@ -296,7 +298,7 @@
                 @endfor
             </table>
         </div>
-    @endfor
+    @endforeach
 
     <!-- III. BONGKAR BAHAN BAKU / CONTAINER -->
     <table class="w-100 section-container" style="margin-bottom: 2px; margin-top: 5px;">
@@ -593,6 +595,63 @@
                     </table>
                 </td>
             </tr>
+        </table>
+
+        <!-- ADDED: TABEL KARYAWAN OP.7 & PENGGANTI (FULL WIDTH DI BAWAH) -->
+        <div class="text-center border-all bg-gray text-bold" style="border-bottom:none; margin-top: 5px; padding: 1px;">KARYAWAN OP.7</div>
+        <table class="table-bordered w-100 mb-2">
+            <tr class="bg-gray">
+                <th style="width: 20px;">NO.</th>
+                <th>NAMA</th>
+                <th>NO. FORKLIFT</th>
+                <th>AREA KERJA</th>
+                <th style="width: 40px;">MASUK</th>
+                <th style="width: 40px;">KELUAR</th>
+                <th>KETERANGAN</th>
+            </tr>
+            @php $op7Emps = $report->employeeLogs->where('category', 'op7')->values(); @endphp
+            @foreach($op7Emps as $index => $emp)
+            <tr>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td>{{ $emp->name }}</td>
+                <td>{{ $emp->no_forklift_ }}</td>
+                <td>{{ $emp->work_area }}</td>
+                <td class="text-center">{{ $emp->time_in ? \Carbon\Carbon::parse($emp->time_in)->format('H:i') : '' }}</td>
+                <td class="text-center">{{ $emp->time_out ? \Carbon\Carbon::parse($emp->time_out)->format('H:i') : '' }}</td>
+                <td>{{ $emp->description }}</td>
+            </tr>
+            @endforeach
+            @if($op7Emps->count() == 0)
+                <tr><td class="text-center">1</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            @endif
+        </table>
+
+        <div class="text-center border-all bg-gray text-bold" style="border-bottom:none; margin-top: 5px; padding: 1px;">DAFTAR PENGGANTI OPERATOR YANG TIDAK MASUK</div>
+        <table class="table-bordered w-100">
+            <tr class="bg-gray">
+                <th style="width: 20px;">NO.</th>
+                <th>NAMA PENGGANTI</th>
+                <th>NO. FORKLIFT</th>
+                <th>AREA KERJA</th>
+                <th style="width: 40px;">MASUK</th>
+                <th style="width: 40px;">KELUAR</th>
+                <th>MENGGANTIKAN / KET</th>
+            </tr>
+            @php $replacementEmps = $report->employeeLogs->where('category', 'replacement')->values(); @endphp
+            @foreach($replacementEmps as $index => $emp)
+            <tr>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td>{{ $emp->name }}</td>
+                <td>{{ $emp->no_forklift_ }}</td>
+                <td>{{ $emp->work_area }}</td>
+                <td class="text-center">{{ $emp->time_in ? \Carbon\Carbon::parse($emp->time_in)->format('H:i') : '' }}</td>
+                <td class="text-center">{{ $emp->time_out ? \Carbon\Carbon::parse($emp->time_out)->format('H:i') : '' }}</td>
+                <td>{{ $emp->description }}</td>
+            </tr>
+            @endforeach
+            @if($replacementEmps->count() == 0)
+                <tr><td class="text-center">1</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            @endif
         </table>
     </div>
 

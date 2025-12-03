@@ -4,13 +4,14 @@
 
         <div class="activities d-flex align-items-center align-self-stretch"
             style="gap: 5px; border-bottom: 1px solid rgba(0, 0, 0, 0.2);">
+            <!-- Tab Default -->
             <a class="activities-tab active" data-sequence="1">Kegiatan 1</a>
             <a class="activities-tab" data-sequence="2">Kegiatan 2</a>
             <a class="activities-tab" data-sequence="3">Kegiatan 3</a>
             <a class="activities-tab" data-sequence="4">Kegiatan 4</a>
         </div>
 
-        <!-- Containers for Activities (Injected via JS) -->
+        <!-- Containers for Activities (Will be filled by JS) -->
         <div id="activity-content-1" class="activity-pane active"></div>
         <div id="activity-content-2" class="activity-pane"></div>
         <div id="activity-content-3" class="activity-pane"></div>

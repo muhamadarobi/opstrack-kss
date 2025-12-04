@@ -505,11 +505,21 @@
                         </div>
                         <div class="mb-3">
                             <label for="empGroup" class="form-label">Group</label>
-                            <input type="text" class="form-control" name="group_name" id="empGroup" placeholder="Contoh: Group A" required>
+                            <select type="text" class="form-control" name="group_name" id="editEmpGroup" required>
+                                <option value="" selected disabled>Pilih Group</option>
+                                <option value="Group A">Group A</option>
+                                <option value="Group B">Group B</option>
+                                <option value="Group C">Group D</option>
+                                <option value="Group D">Group C</option>
+                                <option value="OP.7 Group A">OP.7 Group A</option>
+                                <option value="OP.7 Group B">OP.7 Group B</option>
+                                <option value="OP.7 Group C">OP.7 Group D</option>
+                                <option value="OP.7 Group D">OP.7 Group C</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="empPosition" class="form-label">Jabatan/Posisi</label>
-                            <input type="text" class="form-control" name="position" id="empPosition" placeholder="Contoh: Driver" required>
+                            <input type="text" class="form-control" name="position" id="empPosition" placeholder="Contoh: Driver">
                         </div>
                         <button type="submit" class="btn-submit-modal">Simpan Karyawan</button>
                     </form>
@@ -637,11 +647,21 @@
                         </div>
                         <div class="mb-3">
                             <label for="editEmpGroup" class="form-label">Group</label>
-                            <input type="text" class="form-control" name="group_name" id="editEmpGroup" required>
+                            <select type="text" class="form-control" name="group_name" id="editEmpGroup" required>
+                                <option value="" selected disabled>Pilih Group</option>
+                                <option value="Group A">Group A</option>
+                                <option value="Group B">Group B</option>
+                                <option value="Group C">Group D</option>
+                                <option value="Group D">Group C</option>
+                                <option value="OP.7 Group A">OP.7 Group A</option>
+                                <option value="OP.7 Group B">OP.7 Group B</option>
+                                <option value="OP.7 Group C">OP.7 Group D</option>
+                                <option value="OP.7 Group D">OP.7 Group C</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="editEmpPosition" class="form-label">Jabatan/Posisi</label>
-                            <input type="text" class="form-control" name="position" id="editEmpPosition" required>
+                            <input type="text" class="form-control" name="position" id="editEmpPosition">
                         </div>
                         <button type="submit" class="btn-submit-modal">Simpan Perubahan</button>
                     </form>

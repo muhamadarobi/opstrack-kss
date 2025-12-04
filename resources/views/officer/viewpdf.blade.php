@@ -3,7 +3,44 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Laporan Harian Shift</title>
-    <link rel="icon" href="{{ public_path('assets/Logo-compressed 1.png') }}">
+
+    {{--
+        ==================================================================
+        LOGIC FLEXIBLE PATH (PDF vs HTML)
+        ==================================================================
+        Logic ini menentukan apakah gambar harus diambil dari path fisik (C:/...)
+        untuk render PDF, atau dari URL (http://...) untuk tampilan browser.
+    --}}
+    @php
+        // Default false jika variabel tidak dikirim dari controller
+        $isPdf = $isPdf ?? false;
+
+        // Fungsi Helper untuk memilih source gambar
+        if (!function_exists('getImgSrc')) {
+            function getImgSrc($path, $isPdf) {
+                // Jika PDF, gunakan path fisik. Jika HTML, gunakan URL asset.
+                return $isPdf ? public_path($path) : asset($path);
+            }
+        }
+    @endphp
+
+    {{-- Favicon hanya ditampilkan jika mode HTML (Browser) --}}
+    @if(!$isPdf)
+        <link rel="icon" href="{{ asset('assets/Logo-compressed 1.png') }}">
+
+        {{-- CSS KHUSUS UNTUK ZOOM TAMPILAN HTML --}}
+        <style>
+            body {
+                /* Untuk Chrome, Edge, Safari */
+                zoom: 150%;
+
+                /* Opsional: Untuk Firefox (karena tidak mendukung properti zoom) */
+                -moz-transform: scale(1.5);
+                -moz-transform-origin: top center;
+            }
+        </style>
+    @endif
+
     <style>
         @page {
             /* Legal Size: 21.59cm x 35.56cm */
@@ -112,10 +149,6 @@
             function formatQty($val) {
                 if ($val === null || $val === '') return '';
                 $val = (float)$val;
-                // Jika ada sisa pembagian 1 (berarti pecahan), tampilkan 2 desimal
-                // Jika tidak (bulat), tampilkan 0 desimal
-                // number_format($val, decimals, decimal_separator, thousands_separator)
-                // Default: comma for thousands, dot for decimal
                 return fmod($val, 1) !== 0.00 ? number_format($val, 2) : number_format($val, 0);
             }
         }
@@ -133,9 +166,9 @@
                 <div>di- Bontang</div>
             </td>
 
-            <!-- TENGAH: LOGO (20%) -->
+            <!-- TENGAH: LOGO (20%) - MENGGUNAKAN HELPER getImgSrc -->
             <td style="width: 20%; vertical-align: top; text-align: center;">
-                <img src="{{ public_path('assets/KSS.png') }}" alt="Logo KSS" class="logo-img">
+                <img src="{{ getImgSrc('assets/KSS.png', $isPdf) }}" alt="Logo KSS" class="logo-img">
             </td>
 
             <!-- KANAN: INFO UMUM (40%) -->
@@ -204,7 +237,7 @@
                     <!-- KANAN -->
                     <td style="width: 33%; padding: 2px; vertical-align: top;">
                         <table class="w-100 no-border">
-                            <tr><td class="label-col">Tiba/Sandar</td><td class="sep-col">:</td><td class="border-bottom">{{ isset($activity->arrival_time) ? \Carbon\Carbon::parse($activity->arrival_time)->format('d/m H:i') : '' }}</td></tr>
+                            <tr><td class="label-col">Tiba/Sandar</td><td class="sep-col">:</td><td class="border-bottom">{{ isset($activity->arrival_time) ? \Carbon\Carbon::parse($activity->arrival_time)->locale('id')->translatedFormat('d F Y H:i') : '' }}</td></tr>
                             <tr><td class="label-col">Gang Ops</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->operating_gang ?? '' }}</td></tr>
                             <tr><td class="label-col">Jml TKBM</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->tkbm_count ? $activity->tkbm_count . ' Orang' : '' }}</td></tr>
                             <tr><td class="label-col">Mandor</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->foreman ?? '' }}</td></tr>
@@ -303,8 +336,8 @@
                     </td>
                     <td style="width: 50%; vertical-align: top; padding: 2px;">
                         <table class="w-100">
-                            <tr><td style="width: 60px;">Sandar</td><td class="sep-col">:</td><td>{{ optional($bulk)->berthing_time ?? '' }}</td></tr>
-                            <tr><td>Mulai Muat</td><td class="sep-col">:</td><td>{{ optional($bulk)->start_loading_time ?? '' }}</td></tr>
+                            <tr><td style="width: 60px;">Tiba/Sandar</td><td class="sep-col">:</td><td>{{ optional($bulk)->berthing_time ? \Carbon\Carbon::parse($bulk->berthing_time)->locale('id')->translatedFormat('d F Y H:i') : '' }}</td></tr>
+                            <tr><td>Mulai Muat</td><td class="sep-col">:</td><td>{{ optional($bulk)->start_loading_time ? \Carbon\Carbon::parse($bulk->start_loading_time)->locale('id')->translatedFormat('d F Y H:i') : '' }}</td></tr>
                             <tr><td>Tujuan</td><td class="sep-col">:</td><td>{{ optional($bulk)->destination ?? '' }}</td></tr>
                             <tr><td>Petugas PBM</td><td class="sep-col">:</td><td>{{ optional($bulk)->stevedoring ?? '' }}</td></tr>
                         </table>
@@ -709,8 +742,11 @@
 
                 <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
                     @if($report->status == 'approved' && $report->approver && $report->approver->signature_path)
-                        @if(file_exists(public_path($report->approver->signature_path)))
-                            <img src="{{ public_path($report->approver->signature_path) }}" class="signature-img">
+                        @php $sigPath = $report->approver->signature_path; @endphp
+                        {{-- CEK FILE SELALU PAKAI public_path --}}
+                        @if(file_exists(public_path($sigPath)))
+                            {{-- RENDER GAMBAR GUNAKAN HELPER --}}
+                            <img src="{{ getImgSrc($sigPath, $isPdf) }}" class="signature-img">
                         @endif
                     @endif
                 </div>
@@ -728,8 +764,9 @@
 
                 <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
                     @if(in_array($report->status, ['acknowledged', 'approved']) && $report->receiver && $report->receiver->signature_path)
-                        @if(file_exists(public_path($report->receiver->signature_path)))
-                            <img src="{{ public_path($report->receiver->signature_path) }}" class="signature-img">
+                        @php $sigPath = $report->receiver->signature_path; @endphp
+                        @if(file_exists(public_path($sigPath)))
+                            <img src="{{ getImgSrc($sigPath, $isPdf) }}" class="signature-img">
                         @endif
                     @endif
                 </div>
@@ -747,8 +784,9 @@
 
                 <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
                     @if($report->creator && $report->creator->signature_path)
-                        @if(file_exists(public_path($report->creator->signature_path)))
-                            <img src="{{ public_path($report->creator->signature_path) }}" class="signature-img">
+                        @php $sigPath = $report->creator->signature_path; @endphp
+                        @if(file_exists(public_path($sigPath)))
+                            <img src="{{ getImgSrc($sigPath, $isPdf) }}" class="signature-img">
                         @endif
                     @endif
                 </div>

@@ -489,7 +489,7 @@ class ReportController extends Controller
         // Kirim isPdf = false karena ini tampilan HTML browser
         $isPdf = false;
 
-        return view('officer.pdf', compact('report', 'isPdf'));
+        return view('officer.viewpdf', compact('report', 'isPdf'));
     }
 
     /**

@@ -90,8 +90,22 @@ class AdminController extends Controller
     {
         $report = DailyReport::findOrFail($id);
 
-        // Nama file saat didownload user (Boleh beda dengan nama file fisik di server)
-        $downloadFilename = 'Laporan-Shift-' . $report->id . '-' . Carbon::parse($report->report_date)->format('Ymd') . '.pdf';
+        // 1. Format Tanggal: "4 December 2025"
+        $formattedDate = Carbon::parse($report->report_date)->format('j F Y');
+
+        // 2. Ambil Data Shift dan Group (Pastikan nama kolom sesuai DB, misal: shift, work_group)
+        // Gunakan operator ?? (null coalescing) untuk mencegah error jika data kosong
+        $shiftName = $report->shift ?? 'Shift';
+        $groupName = $report->work_group ?? $report->group_name ?? 'Group';
+
+        // 3. Susun Nama File
+        // Format: Laporan Shift Harian - Pagi - A - 4 December 2025.pdf
+        $downloadFilename = sprintf(
+            'Laporan Shift Harian - %s - %s - %s.pdf',
+            $shiftName,
+            $groupName,
+            $formattedDate
+        );
 
         // Lokasi File Fisik (Harus sama persis dengan method approve)
         $physicalPath = storage_path('app/public/reports/report-' . $report->id . '.pdf');

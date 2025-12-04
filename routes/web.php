@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AdminController;
-use App\Http\Middleware\CheckRole;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,7 +64,7 @@ Route::middleware('auth')->group(function () {
         // View/Download PDF Laporan (Khusus Admin)
         Route::get('/report/{id}/view', [AdminController::class, 'viewPdf'])->name('admin.report.view');
 
-        // [BARU] Route Approve Dokumen (Tanda Tangan Admin)
+        // Route Approve Dokumen (Tanda Tangan Admin)
         Route::post('/report/{id}/approve', [AdminController::class, 'approve'])->name('admin.report.approve');
     });
 
@@ -74,7 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:petugas')->prefix('reports')->group(function () {
 
         // 1. Halaman History (Utama)
-        // Saya ubah namanya jadi 'reports.history' agar sinkron dengan redirect di ReportController
+        // UPDATED: Diubah ke reports.history agar sesuai dengan Controller redirect
         Route::get('/officer', [ReportController::class, 'history'])->name('reports.index');
 
         // 2. Halaman Form Create
@@ -83,17 +82,20 @@ Route::middleware('auth')->group(function () {
         // 3. Proses Simpan Data (POST)
         Route::post('/officer/store', [ReportController::class, 'store'])->name('reports.store');
 
-        // 4. Export PDF
+        // 4. FITUR EDIT (NEW)
+        // Halaman Edit
+        Route::get('/officer/{id}/edit', [ReportController::class, 'edit'])->name('reports.edit');
+        // Proses Update (PUT)
+        Route::put('/officer/{id}', [ReportController::class, 'update'])->name('reports.update');
+
+        // 5. Export PDF
         Route::get('/officer/{id}/export-pdf', [ReportController::class, 'exportPdf'])->name('reports.export_pdf');
 
         // --- TAMBAHAN ROUTE ---
-        // Route untuk Halaman Tanda Tangan (Sesuai Blade: reports.sign)
+        // Route untuk Halaman Tanda Tangan
         Route::get('/officer/{id}/sign', [ReportController::class, 'sign'])->name('reports.sign');
 
-        // Route Proses Simpan Tanda Tangan (Opsional, jika nanti butuh POST)
-        // Route::post('/{id}/sign', [ReportController::class, 'processSign'])->name('reports.sign.process');
-
-        // Route Detail Laporan (Sesuai Blade: reports.show)
+        // Route Detail Laporan
         // Ditaruh paling bawah agar tidak bentrok dengan URL lain seperti /create
         Route::get('/officer/{id}', [ReportController::class, 'show'])->name('reports.show');
     });

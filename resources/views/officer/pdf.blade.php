@@ -3,7 +3,44 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Laporan Harian Shift</title>
-    <link rel="icon" href="{{ public_path('assets/Logo-compressed 1.png') }}">
+
+    {{--
+        ==================================================================
+        LOGIC FLEXIBLE PATH (PDF vs HTML)
+        ==================================================================
+        Logic ini menentukan apakah gambar harus diambil dari path fisik (C:/...)
+        untuk render PDF, atau dari URL (http://...) untuk tampilan browser.
+    --}}
+    @php
+        // Default false jika variabel tidak dikirim dari controller
+        $isPdf = $isPdf ?? false;
+
+        // Fungsi Helper untuk memilih source gambar
+        if (!function_exists('getImgSrc')) {
+            function getImgSrc($path, $isPdf) {
+                // Jika PDF, gunakan path fisik. Jika HTML, gunakan URL asset.
+                return $isPdf ? public_path($path) : asset($path);
+            }
+        }
+    @endphp
+
+    {{-- Favicon hanya ditampilkan jika mode HTML (Browser) --}}
+    @if(!$isPdf)
+        <link rel="icon" href="{{ asset('assets/Logo-compressed 1.png') }}">
+
+        {{-- CSS KHUSUS UNTUK ZOOM TAMPILAN HTML --}}
+        <style>
+            body {
+                /* Untuk Chrome, Edge, Safari */
+                zoom: 150%;
+
+                /* Opsional: Untuk Firefox (karena tidak mendukung properti zoom) */
+                -moz-transform: scale(1.5);
+                -moz-transform-origin: top center;
+            }
+        </style>
+    @endif
+
     <style>
         @page {
             /* Legal Size: 21.59cm x 35.56cm */
@@ -52,7 +89,6 @@
             text-align: center;
             text-transform: uppercase;
             margin: 5px 0 8px 0;
-            text-decoration: underline;
             letter-spacing: 0.5px;
         }
         .section-header {
@@ -107,6 +143,16 @@
     </style>
 </head>
 <body>
+    {{-- HELPER FUNCTION FOR DYNAMIC DECIMAL --}}
+    @php
+        if (!function_exists('formatQty')) {
+            function formatQty($val) {
+                if ($val === null || $val === '') return '';
+                $val = (float)$val;
+                return fmod($val, 1) !== 0.00 ? number_format($val, 2) : number_format($val, 0);
+            }
+        }
+    @endphp
 
     <!-- HEADER INFO: 3 KOLOM SEJAJAR -->
     <table class="w-100 no-border" style="margin-bottom: 5px;">
@@ -120,9 +166,9 @@
                 <div>di- Bontang</div>
             </td>
 
-            <!-- TENGAH: LOGO (20%) -->
+            <!-- TENGAH: LOGO (20%) - MENGGUNAKAN HELPER getImgSrc -->
             <td style="width: 20%; vertical-align: top; text-align: center;">
-                <img src="{{ public_path('assets/KSS.png') }}" alt="Logo KSS" class="logo-img">
+                <img src="{{ getImgSrc('assets/KSS.png', $isPdf) }}" alt="Logo KSS" class="logo-img">
             </td>
 
             <!-- KANAN: INFO UMUM (40%) -->
@@ -144,7 +190,15 @@
     <!-- I. PEMUATAN PUPUK KANTONG -->
     <div class="section-header">I. PEMUATAN PUPUK KANTONG</div>
 
-    @foreach($report->loadingActivities->sortBy('sequence') as $activity)
+    @php
+        $loadingActivities = $report->loadingActivities->sortBy('sequence');
+        // Jika kosong, buat array dengan 1 elemen null agar loop berjalan sekali (untuk menampilkan form kosong)
+        if ($loadingActivities->isEmpty()) {
+            $loadingActivities = [null];
+        }
+    @endphp
+
+    @foreach($loadingActivities as $index => $activity)
         <div class="activity-box">
             <!-- INFO ATAS -->
             <table class="w-100" style="margin-bottom: 0;">
@@ -152,46 +206,47 @@
                     <!-- KIRI -->
                     <td style="width: 34%; border-right: 0.5px solid black; padding: 2px; vertical-align: top;">
                         <table class="w-100 no-border">
-                            <tr><td style="width: 15px;"><b>{{ $activity->sequence }}.</b></td><td class="label-col">Nama Kapal</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->ship_name ?? '' }}</td></tr>
-                            <tr><td></td><td>Agent</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->agent ?? '' }}</td></tr>
-                            <tr><td></td><td>Dermaga</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->jetty ?? '' }}</td></tr>
-                            <tr><td></td><td>Tujuan</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->destination ?? '' }}</td></tr>
+                            {{-- Gunakan optional() agar tidak error jika $activity null --}}
+                            <tr><td style="width: 15px;"><b>{{ optional($activity)->sequence ?? ($loop->iteration) }}.</b></td><td class="label-col">Nama Kapal</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->ship_name ?? '' }}</td></tr>
+                            <tr><td></td><td>Agent</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->agent ?? '' }}</td></tr>
+                            <tr><td></td><td>Dermaga</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->jetty ?? '' }}</td></tr>
+                            <tr><td></td><td>Tujuan</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->destination ?? '' }}</td></tr>
                         </table>
                         <div style="font-weight: bold; margin-top: 2px; margin-left: 5px;">a. Pengiriman</div>
                         <table class="w-100 no-border" style="margin-left: 5px; width: 95%;">
-                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_delivery_current, 0) }}</td><td style="width: 15px;">Ton</td></tr>
-                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_delivery_prev, 0) }}</td><td>Ton</td></tr>
-                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_delivery_current + $activity->qty_delivery_prev, 0) }}</td><td>Ton</td></tr>
+                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_delivery_current) : '' }}</td><td style="width: 15px;">Ton</td></tr>
+                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_delivery_prev) : '' }}</td><td>Ton</td></tr>
+                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_delivery_current + $activity->qty_delivery_prev) : '' }}</td><td>Ton</td></tr>
                         </table>
                     </td>
                     <!-- TENGAH -->
                     <td style="width: 33%; border-right: 0.5px solid black; padding: 2px; vertical-align: top;">
                         <table class="w-100 no-border">
-                            <tr><td class="label-col">Kapasitas</td><td class="sep-col">:</td><td class="border-bottom text-right">{{ $activity->capacity ? number_format($activity->capacity, 0) : '' }}</td><td style="width: 15px;">Ton</td></tr>
-                            <tr><td class="label-col">No. WO/SO</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ $activity->wo_number ?? '' }}</td></tr>
-                            <tr><td class="label-col">Jenis</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ $activity->cargo_type ?? '' }}</td></tr>
-                            <tr><td class="label-col">Marking</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ $activity->marking ?? '' }}</td></tr>
+                            <tr><td class="label-col">Kapasitas</td><td class="sep-col">:</td><td class="border-bottom text-right">{{ optional($activity)->capacity ? formatQty($activity->capacity) : '' }}</td><td style="width: 15px;">Ton</td></tr>
+                            <tr><td class="label-col">No. WO/SO</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ optional($activity)->wo_number ?? '' }}</td></tr>
+                            <tr><td class="label-col">Jenis</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ optional($activity)->cargo_type ?? '' }}</td></tr>
+                            <tr><td class="label-col">Marking</td><td class="sep-col">:</td><td class="border-bottom" colspan="2">{{ optional($activity)->marking ?? '' }}</td></tr>
                         </table>
                         <div style="font-weight: bold; margin-top: 2px; margin-left: 5px;">b. Pemuatan</div>
                         <table class="w-100 no-border" style="margin-left: 5px; width: 95%;">
-                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_loading_current, 0) }}</td><td style="width: 15px;">Ton</td></tr>
-                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_loading_prev, 0) }}</td><td>Ton</td></tr>
-                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_loading_current + $activity->qty_loading_prev, 0) }}</td><td>Ton</td></tr>
+                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_loading_current) : '' }}</td><td style="width: 15px;">Ton</td></tr>
+                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_loading_prev) : '' }}</td><td>Ton</td></tr>
+                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_loading_current + $activity->qty_loading_prev) : '' }}</td><td>Ton</td></tr>
                         </table>
                     </td>
                     <!-- KANAN -->
                     <td style="width: 33%; padding: 2px; vertical-align: top;">
                         <table class="w-100 no-border">
-                            <tr><td class="label-col">Tiba/Sandar</td><td class="sep-col">:</td><td class="border-bottom">{{ isset($activity->arrival_time) ? \Carbon\Carbon::parse($activity->arrival_time)->format('d/m H:i') : '' }}</td></tr>
-                            <tr><td class="label-col">Gang Ops</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->operating_gang ?? '' }}</td></tr>
-                            <tr><td class="label-col">Jml TKBM</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->tkbm_count ? $activity->tkbm_count . ' Orang' : '' }}</td></tr>
-                            <tr><td class="label-col">Mandor</td><td class="sep-col">:</td><td class="border-bottom">{{ $activity->foreman ?? '' }}</td></tr>
+                            <tr><td class="label-col">Tiba/Sandar</td><td class="sep-col">:</td><td class="border-bottom">{{ isset($activity->arrival_time) ? \Carbon\Carbon::parse($activity->arrival_time)->locale('id')->translatedFormat('d F Y H:i') : '' }}</td></tr>
+                            <tr><td class="label-col">Gang Ops</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->operating_gang ?? '' }}</td></tr>
+                            <tr><td class="label-col">Jml TKBM</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->tkbm_count ? $activity->tkbm_count . ' Orang' : '' }}</td></tr>
+                            <tr><td class="label-col">Mandor</td><td class="sep-col">:</td><td class="border-bottom">{{ optional($activity)->foreman ?? '' }}</td></tr>
                         </table>
                         <div style="font-weight: bold; margin-top: 2px; margin-left: 5px;">c. Kerusakan</div>
                         <table class="w-100 no-border" style="margin-left: 5px; width: 95%;">
-                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_damage_current, 0) }}</td><td style="width: 15px;">Ton</td></tr>
-                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_damage_prev, 0) }}</td><td>Ton</td></tr>
-                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ number_format($activity->qty_damage_current + $activity->qty_damage_prev, 0) }}</td><td>Ton</td></tr>
+                            <tr><td style="width: 50px;">- Sekarang</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_damage_current) : '' }}</td><td style="width: 15px;">Ton</td></tr>
+                            <tr><td>- Lalu</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_damage_prev) : '' }}</td><td>Ton</td></tr>
+                            <tr><td>- Akumulasi</td><td class="sep-col">:</td><td class="text-right border-bottom">{{ $activity ? formatQty($activity->qty_damage_current + $activity->qty_damage_prev) : '' }}</td><td>Ton</td></tr>
                         </table>
                     </td>
                 </tr>
@@ -206,8 +261,8 @@
                         <table class="w-100 table-bordered no-border">
                             <tr><th style="width: 15%;">JAM</th><th>PENGIRIMAN</th></tr>
                             @php
-                                $dLogs = $activity->timesheets->where('category', 'delivery')->values();
-                                $lLogs = $activity->timesheets->where('category', 'loading')->values();
+                                $dLogs = $activity ? $activity->timesheets->where('category', 'delivery')->values() : collect([]);
+                                $lLogs = $activity ? $activity->timesheets->where('category', 'loading')->values() : collect([]);
                                 $maxRows = max(3, $dLogs->count(), $lLogs->count());
                             @endphp
                             @for($r=0; $r < $maxRows; $r++)
@@ -220,9 +275,9 @@
                         <!-- Petugas Kiri -->
                         <!-- UPDATED: Font size jadi 7pt -->
                         <table class="w-100 no-border" style="font-size: 7pt; border-top: 0.5px solid black;">
-                            <tr><td style="width: 60px;">Tally Gudang</td><td class="sep-col">:</td><td>{{ $activity->tally_warehouse ?? '' }}</td></tr>
-                            <tr><td>Driver</td><td class="sep-col">:</td><td>{{ $activity->driver_name ?? '' }}</td></tr>
-                            <tr><td>Truck No.</td><td class="sep-col">:</td><td>{{ $activity->truck_number ?? '' }}</td></tr>
+                            <tr><td style="width: 60px;">Tally Gudang</td><td class="sep-col">:</td><td>{{ optional($activity)->tally_warehouse ?? '' }}</td></tr>
+                            <tr><td>Driver</td><td class="sep-col">:</td><td>{{ optional($activity)->driver_name ?? '' }}</td></tr>
+                            <tr><td>Truck No.</td><td class="sep-col">:</td><td>{{ optional($activity)->truck_number ?? '' }}</td></tr>
                         </table>
                     </td>
                     <!-- Timesheet Pemuatan -->
@@ -240,13 +295,13 @@
                         <!-- UPDATED: Font size jadi 7pt -->
                         <table class="w-100 no-border" style="font-size: 7pt; border-top: 0.5px solid black;">
                             <tr>
-                                <td style="width: 75px;">Tally Kapal</td><td class="sep-col">:</td><td style="width: 60px;">{{ $activity->tally_ship ?? '' }}</td>
-                                <td style="width: 40px;">Operator</td><td class="sep-col">:</td><td>{{ $activity->operator_ship ?? '' }}</td>
-                                <td>Forklift</td><td class="sep-col">:</td><td>{{ $activity->forklift_ship ?? '' }}</td>
+                                <td style="width: 75px;">Tally Kapal</td><td class="sep-col">:</td><td style="width: 60px;">{{ optional($activity)->tally_ship ?? '' }}</td>
+                                <td style="width: 40px;">Operator</td><td class="sep-col">:</td><td>{{ optional($activity)->operator_ship ?? '' }}</td>
+                                <td>Forklift</td><td class="sep-col">:</td><td>{{ optional($activity)->forklift_ship ?? '' }}</td>
                             </tr>
                             <tr>
-                                <td style="white-space: nowrap;">Operator Gudang</td><td class="sep-col">:</td><td>{{ $activity->operator_warehouse ?? '' }}</td>
-                                <td>Forklift</td><td class="sep-col">:</td><td>{{ $activity->forklift_warehouse ?? '' }}</td>
+                                <td style="white-space: nowrap;">Operator Gudang</td><td class="sep-col">:</td><td>{{ optional($activity)->operator_warehouse ?? '' }}</td>
+                                <td>Forklift</td><td class="sep-col">:</td><td>{{ optional($activity)->forklift_warehouse ?? '' }}</td>
                             </tr>
                         </table>
                     </td>
@@ -257,25 +312,34 @@
 
     <!-- II. PEMUATAN UREA CURAH -->
     <div class="section-header">II. PEMUATAN UREA CURAH</div>
-    @foreach($report->bulkLoadingActivities->sortBy('sequence') as $bulk)
+
+    @php
+        $bulkActivities = $report->bulkLoadingActivities->sortBy('sequence');
+        // Jika kosong, buat array dengan 1 elemen null agar loop berjalan sekali (untuk menampilkan form kosong)
+        if ($bulkActivities->isEmpty()) {
+            $bulkActivities = [null];
+        }
+    @endphp
+
+    @foreach($bulkActivities as $index => $bulk)
         <div class="activity-box">
             <table class="w-100 no-border">
                 <tr>
                     <td style="width: 50%; vertical-align: top; border-right: 0.5px solid black; padding: 2px;">
                         <table class="w-100">
                             <!-- UPDATED: Width Nama Kapal diperlebar jadi 70px -->
-                            <tr><td style="width: 15px;"><b>{{ $bulk->sequence }}.</b></td><td style="width: 70px;">Nama Kapal</td><td class="sep-col">:</td><td>{{ $bulk->ship_name ?? '' }}</td></tr>
-                            <tr><td></td><td>Agent</td><td class="sep-col">:</td><td>{{ $bulk->agent ?? '' }}</td></tr>
-                            <tr><td></td><td>Jenis Urea</td><td class="sep-col">:</td><td>{{ $bulk->commodity ?? '' }}</td></tr>
-                            <tr><td></td><td>Kapasitas</td><td class="sep-col">:</td><td>{{ number_format($bulk->capacity, 0) }} MT</td></tr>
+                            <tr><td style="width: 15px;"><b>{{ optional($bulk)->sequence ?? ($loop->iteration) }}.</b></td><td style="width: 70px;">Nama Kapal</td><td class="sep-col">:</td><td>{{ optional($bulk)->ship_name ?? '' }}</td></tr>
+                            <tr><td></td><td>Agent</td><td class="sep-col">:</td><td>{{ optional($bulk)->agent ?? '' }}</td></tr>
+                            <tr><td></td><td>Jenis Urea</td><td class="sep-col">:</td><td>{{ optional($bulk)->commodity ?? '' }}</td></tr>
+                            <tr><td></td><td>Kapasitas</td><td class="sep-col">:</td><td>{{ optional($bulk)->capacity ? formatQty($bulk->capacity) . ' MT' : '' }}</td></tr>
                         </table>
                     </td>
                     <td style="width: 50%; vertical-align: top; padding: 2px;">
                         <table class="w-100">
-                            <tr><td style="width: 60px;">Sandar</td><td class="sep-col">:</td><td>{{ $bulk->berthing_time ?? '' }}</td></tr>
-                            <tr><td>Mulai Muat</td><td class="sep-col">:</td><td>{{ $bulk->start_loading_time ?? '' }}</td></tr>
-                            <tr><td>Tujuan</td><td class="sep-col">:</td><td>{{ $bulk->destination ?? '' }}</td></tr>
-                            <tr><td>Petugas PBM</td><td class="sep-col">:</td><td>{{ $bulk->stevedoring ?? '' }}</td></tr>
+                            <tr><td style="width: 60px;">Tiba/Sandar</td><td class="sep-col">:</td><td>{{ optional($bulk)->berthing_time ? \Carbon\Carbon::parse($bulk->berthing_time)->locale('id')->translatedFormat('d F Y H:i') : '' }}</td></tr>
+                            <tr><td>Mulai Muat</td><td class="sep-col">:</td><td>{{ optional($bulk)->start_loading_time ? \Carbon\Carbon::parse($bulk->start_loading_time)->locale('id')->translatedFormat('d F Y H:i') : '' }}</td></tr>
+                            <tr><td>Tujuan</td><td class="sep-col">:</td><td>{{ optional($bulk)->destination ?? '' }}</td></tr>
+                            <tr><td>Petugas PBM</td><td class="sep-col">:</td><td>{{ optional($bulk)->stevedoring ?? '' }}</td></tr>
                         </table>
                     </td>
                 </tr>
@@ -284,7 +348,7 @@
                 <tr class="bg-gray">
                     <th style="width: 15%;">TANGGAL</th><th style="width: 10%;">JAM</th><th>URAIAN KEGIATAN</th><th style="width: 10%;">COB</th>
                 </tr>
-                @php $bLogs = $bulk->logs; @endphp
+                @php $bLogs = $bulk ? $bulk->logs : collect([]); @endphp
                 @foreach($bLogs as $log)
                 <tr>
                     <td class="text-center">{{ \Carbon\Carbon::parse($log->datetime)->translatedFormat('d M Y') }}</td>
@@ -318,7 +382,7 @@
                         <table class="w-100 no-border" style="padding: 2px;">
                             <tr><td style="width: 15px;"><b>1.</b></td><td style="width: 50px;">Nama Kapal</td><td class="sep-col">:</td><td class="border-bottom">{{ $report->materialActivity->ship_name }}</td></tr>
                             <tr><td></td><td>Agent</td><td class="sep-col">:</td><td class="border-bottom">{{ $report->materialActivity->agent }}</td></tr>
-                            <tr><td></td><td>Kapasitas</td><td class="sep-col">:</td><td class="border-bottom">{{ number_format($report->materialActivity->capacity, 0) }} MT</td></tr>
+                            <tr><td></td><td>Kapasitas</td><td class="sep-col">:</td><td class="border-bottom">{{ formatQty($report->materialActivity->capacity) }} MT</td></tr>
                         </table>
                         <table class="table-bordered w-100 no-border-left no-border-right" style="margin-top: 1px;">
                             <tr class="bg-gray"><th>Jenis</th><th>Sekarang</th><th>Lalu</th><th>Total</th></tr>
@@ -326,9 +390,9 @@
                             @foreach($materials as $mat)
                             <tr>
                                 <td>{{ $mat->raw_material_type }}</td>
-                                <td class="text-center">{{ number_format($mat->qty_current, 0) }}</td>
-                                <td class="text-center">{{ number_format($mat->qty_prev, 0) }}</td>
-                                <td class="text-center">{{ number_format($mat->qty_total, 0) }}</td>
+                                <td class="text-center">{{ formatQty($mat->qty_current) }}</td>
+                                <td class="text-center">{{ formatQty($mat->qty_prev) }}</td>
+                                <td class="text-center">{{ formatQty($mat->qty_total) }}</td>
                             </tr>
                             @endforeach
                             @for($y = $materials->count(); $y < $matMin; $y++)
@@ -370,9 +434,9 @@
                             @foreach($containers as $cont)
                             <tr>
                                 <td class="text-center">{{ \Carbon\Carbon::parse($cont->time)->format('H:i') }}</td>
-                                <td class="text-center">{{ number_format($cont->qty_current, 0) }}</td>
-                                <td class="text-center">{{ number_format($cont->qty_prev, 0) }}</td>
-                                <td class="text-center">{{ number_format($cont->qty_total, 0) }}</td>
+                                <td class="text-center">{{ formatQty($cont->qty_current) }}</td>
+                                <td class="text-center">{{ formatQty($cont->qty_prev) }}</td>
+                                <td class="text-center">{{ formatQty($cont->qty_total) }}</td>
                                 <td>{{ $cont->status }}</td>
                             </tr>
                             @endforeach
@@ -413,11 +477,11 @@
                     <td class="text-center">{{ $turbaNo++ }}</td>
                     <td>{{ $deliv->truck_name }}</td>
                     <td class="text-center">{{ $deliv->do_so_number }}</td>
-                    <td class="text-right">{{ number_format($deliv->capacity, 0) }}</td>
+                    <td class="text-right">{{ formatQty($deliv->capacity) }}</td>
                     <td class="text-center">{{ $deliv->marking_type }}</td>
-                    <td class="text-right">{{ number_format($deliv->qty_current, 0) }}</td>
-                    <td class="text-right">{{ number_format($deliv->qty_prev, 0) }}</td>
-                    <td class="text-right">{{ number_format($deliv->qty_accumulated, 0) }}</td>
+                    <td class="text-right">{{ formatQty($deliv->qty_current) }}</td>
+                    <td class="text-right">{{ formatQty($deliv->qty_prev) }}</td>
+                    <td class="text-right">{{ formatQty($deliv->qty_accumulated) }}</td>
                 </tr>
                 @endforeach
             @endif
@@ -598,7 +662,7 @@
         </table>
 
         <!-- ADDED: TABEL KARYAWAN OP.7 & PENGGANTI (FULL WIDTH DI BAWAH) -->
-        <div class="text-center border-all bg-gray text-bold" style="border-bottom:none; margin-top: 5px; padding: 1px;">KARYAWAN OP.7</div>
+        <div class="text-center border-all bg-gray text-bold" style="border-bottom:none; margin-top: 10px; padding: 1px;">KARYAWAN OP.7</div>
         <table class="table-bordered w-100 mb-2">
             <tr class="bg-gray">
                 <th style="width: 20px;">NO.</th>
@@ -626,7 +690,7 @@
             @endif
         </table>
 
-        <div class="text-center border-all bg-gray text-bold" style="border-bottom:none; margin-top: 5px; padding: 1px;">DAFTAR PENGGANTI OPERATOR YANG TIDAK MASUK</div>
+        <div class="text-center border-all bg-gray text-bold" style="border-bottom:none; margin-top: 10px; padding: 1px;">DAFTAR PENGGANTI OPERATOR YANG TIDAK MASUK</div>
         <table class="table-bordered w-100">
             <tr class="bg-gray">
                 <th style="width: 20px;">NO.</th>
@@ -678,8 +742,11 @@
 
                 <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
                     @if($report->status == 'approved' && $report->approver && $report->approver->signature_path)
-                        @if(file_exists(public_path($report->approver->signature_path)))
-                            <img src="{{ public_path($report->approver->signature_path) }}" class="signature-img">
+                        @php $sigPath = $report->approver->signature_path; @endphp
+                        {{-- CEK FILE SELALU PAKAI public_path --}}
+                        @if(file_exists(public_path($sigPath)))
+                            {{-- RENDER GAMBAR GUNAKAN HELPER --}}
+                            <img src="{{ getImgSrc($sigPath, $isPdf) }}" class="signature-img">
                         @endif
                     @endif
                 </div>
@@ -697,8 +764,9 @@
 
                 <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
                     @if(in_array($report->status, ['acknowledged', 'approved']) && $report->receiver && $report->receiver->signature_path)
-                        @if(file_exists(public_path($report->receiver->signature_path)))
-                            <img src="{{ public_path($report->receiver->signature_path) }}" class="signature-img">
+                        @php $sigPath = $report->receiver->signature_path; @endphp
+                        @if(file_exists(public_path($sigPath)))
+                            <img src="{{ getImgSrc($sigPath, $isPdf) }}" class="signature-img">
                         @endif
                     @endif
                 </div>
@@ -716,8 +784,9 @@
 
                 <div class="signature-box" style="height: 80px; margin-bottom: 5px;">
                     @if($report->creator && $report->creator->signature_path)
-                        @if(file_exists(public_path($report->creator->signature_path)))
-                            <img src="{{ public_path($report->creator->signature_path) }}" class="signature-img">
+                        @php $sigPath = $report->creator->signature_path; @endphp
+                        @if(file_exists(public_path($sigPath)))
+                            <img src="{{ getImgSrc($sigPath, $isPdf) }}" class="signature-img">
                         @endif
                     @endif
                 </div>

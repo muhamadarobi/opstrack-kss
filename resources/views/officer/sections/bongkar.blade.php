@@ -25,7 +25,7 @@
                     <div class="input-item" style="flex: 1;">
                         <label>Kapasitas</label>
                         <!-- Change Name to match controller -->
-                        <input type="number" name="capacity_material" class="form-control" placeholder="0">
+                        <input type="number" step="any" name="capacity_material" class="form-control" placeholder="0">
                     </div>
                 </div>
             </div>
@@ -109,7 +109,7 @@
                     <!-- SINGLE CAPACITY FIELD -->
                     <div class="input-item" style="flex: 1;">
                         <label>Kapasitas</label>
-                        <input type="text" name="capacity_container" class="form-control" placeholder="Total Kapasitas">
+                        <input type="number" step="any" name="capacity_container" class="form-control" placeholder="Total Kapasitas">
                     </div>
                 </div>
             </div>

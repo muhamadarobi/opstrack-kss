@@ -130,6 +130,19 @@
         background-color: #ccc;
         cursor: not-allowed;
     }
+
+    /* --- MODERN CUSTOM SELECT CSS --- */
+    select { display: none !important; }
+    .custom-select-container { position: relative; width: 100%; font-family: 'Inter', sans-serif; min-width: 100px; }
+    .custom-select-trigger { position: relative; display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 20px; font-size: 14px; font-weight: 400; color: var(--text-main); background-color: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.3s; user-select: none; height: 100%; min-height: 42px; }
+    .custom-select-trigger:after { content: '\f078'; font-family: 'Font Awesome 6 Free'; font-weight: 900; font-size: 12px; color: var(--text-muted); transition: transform 0.3s; margin-left: 8px; }
+    .custom-select-container.open .custom-select-trigger { border-color: var(--blue-kss); box-shadow: 0 0 0 3px rgba(0, 119, 194, 0.1); }
+    .custom-select-container.open .custom-select-trigger:after { transform: rotate(180deg); color: var(--blue-kss); }
+    .custom-select-options { position: absolute; top: calc(100% + 5px); left: 0; right: 0; z-index: 999; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px var(--shadow-color); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.2s ease; max-height: 250px; overflow-y: auto; }
+    .custom-select-container.open .custom-select-options { opacity: 1; visibility: visible; transform: translateY(0); }
+    .custom-option { padding: 10px 20px; font-size: 14px; color: var(--text-main); cursor: pointer; transition: background 0.2s; border-bottom: 1px solid transparent; }
+    .custom-option.selected { background-color: var(--hover-bg); color: var(--orange-kss); }
+    .custom-option:hover { background-color: var(--orange-kss); color: var(--white-color); }
 </style>
 @endpush
 
@@ -216,7 +229,7 @@
 
         // Init DateTime
         element.querySelectorAll(".flatpickr-datetime").forEach(el => {
-            flatpickr(el, { enableTime: true, dateFormat: "Y-m-d H:i", altInput: true, altFormat: "j F Y, H:i", time_24hr: true, disableMobile: false, allowInput: true, locale: "id" });
+            flatpickr(el, { enableTime: true, dateFormat: "Y-m-d H:i", altInput: true, altFormat: "j F Y, H:i", time_24hr: true, disableMobile: false, allowInput: true, locale: "id", defaultDate: "{{ \Carbon\Carbon::now('Asia/Makassar')->format('Y-m-d') }}" });
         });
     }
 
@@ -416,6 +429,7 @@
 
     // --- HELPER FUNCTIONS FOR DYNAMIC HTML ---
     function getFormHTML(idSuffix) {
+        // ADDED step="any" to allow decimals
         return `
         <!-- HEADER INFO -->
         <div class="header-loading-info d-flex justify-content-between align-items-start align-content-start align-self-stretch flex-wrap" style="gap: 10px; padding-bottom: 10px;">
@@ -426,15 +440,16 @@
                 <div class="input-loading"><label>Tujuan</label><input type="text" name="destination_${idSuffix}" placeholder="Tujuan Pengiriman"></div>
             </div>
             <div class="loading-info">
-                <div class="input-loading"><label>Kapasitas (Ton)</label><input type="number" name="capacity_${idSuffix}" placeholder="0"></div>
+                <div class="input-loading"><label>Kapasitas (Ton)</label><input type="number" step="any" name="capacity_${idSuffix}" placeholder="0"></div>
                 <div class="input-loading"><label>Nomor WO</label><input type="text" name="wo_number_${idSuffix}" placeholder="No. Work Order"></div>
                 <div class="input-loading"><label>Jenis Kargo</label><input type="text" name="cargo_type_${idSuffix}" placeholder="Pilih Jenis Marking"></div>
                 <div class="input-loading"><label>Marking</label><input type="text" name="marking_${idSuffix}" placeholder="Pilih Marking"></div>
             </div>
             <div class="loading-info">
-                <div class="input-loading"><label>Tiba/Sandar</label><input type="text" id="arrival_time_${idSuffix}" class="arrival-time-picker" placeholder="Pilih Waktu..."></div>
+                <div class="input-loading"><label>Tiba/Sandar</label><input type="text" name="arrival_time_${idSuffix}" class="flatpickr-datetime" placeholder="Pilih Waktu..."></div>
                 <div class="input-loading"><label>Gang Operasi</label><input type="text" name="operating_gang_${idSuffix}" placeholder="Nama/No Gang"></div>
-                <div class="input-loading"><label>Jumlah TKBM</label><input type="number" name="tkbm_count_${idSuffix}" placeholder="0"></div>
+                <!-- ADDED step="any" HERE -->
+                <div class="input-loading"><label>Jumlah TKBM</label><input type="number" step="any" name="tkbm_count_${idSuffix}" placeholder="0"></div>
                 <div class="input-loading"><label>Mandor</label><input type="text" name="foreman_${idSuffix}" placeholder="Nama Foreman"></div>
             </div>
         </div>
@@ -450,8 +465,8 @@
                     </div>
                 </div>
                 <div class="input-quantity d-flex align-items-center align-self-stretch">
-                    <div class="input-qty"><label>Sekarang</label><input type="number" name="qty_delivery_current_${idSuffix}" placeholder="0"></div>
-                    <div class="input-qty"><label>Lalu</label><input type="number" name="qty_delivery_prev_${idSuffix}" placeholder="0"></div>
+                    <div class="input-qty"><label>Sekarang</label><input type="number" step="any" name="qty_delivery_current_${idSuffix}" placeholder="0"></div>
+                    <div class="input-qty"><label>Lalu</label><input type="number" step="any" name="qty_delivery_prev_${idSuffix}" placeholder="0"></div>
                 </div>
                 <div class="loading-accumulated d-flex flex-column align-items-center align-self-stretch" style="gap: 10px;">
                     <div class="accumulated d-flex justify-content-between align-items-center align-self-stretch">
@@ -470,8 +485,8 @@
                     </div>
                 </div>
                 <div class="input-quantity d-flex align-items-center align-self-stretch">
-                    <div class="input-qty"><label>Sekarang</label><input type="number" name="qty_loading_current_${idSuffix}" placeholder="0"></div>
-                    <div class="input-qty"><label>Lalu</label><input type="number" name="qty_loading_prev_${idSuffix}" placeholder="0"></div>
+                    <div class="input-qty"><label>Sekarang</label><input type="number" step="any" name="qty_loading_current_${idSuffix}" placeholder="0"></div>
+                    <div class="input-qty"><label>Lalu</label><input type="number" step="any" name="qty_loading_prev_${idSuffix}" placeholder="0"></div>
                 </div>
                 <div class="loading-accumulated d-flex flex-column align-items-center align-self-stretch" style="gap: 10px;">
                     <div class="accumulated d-flex justify-content-between align-items-center align-self-stretch">
@@ -490,8 +505,8 @@
                     </div>
                 </div>
                 <div class="input-quantity d-flex align-items-center align-self-stretch">
-                    <div class="input-qty"><label>Sekarang</label><input type="number" name="qty_damage_current_${idSuffix}" placeholder="0"></div>
-                    <div class="input-qty"><label>Lalu</label><input type="number" name="qty_damage_prev_${idSuffix}" placeholder="0"></div>
+                    <div class="input-qty"><label>Sekarang</label><input type="number" step="any" name="qty_damage_current_${idSuffix}" placeholder="0"></div>
+                    <div class="input-qty"><label>Lalu</label><input type="number" step="any" name="qty_damage_prev_${idSuffix}" placeholder="0"></div>
                 </div>
                 <div class="loading-accumulated d-flex flex-column align-items-center align-self-stretch" style="gap: 10px;">
                     <div class="accumulated d-flex justify-content-between align-items-center align-self-stretch">
@@ -550,24 +565,13 @@
                         <i class="fa-solid fa-list" style="color: var(--green);"></i>Timesheet
                     </div>
                     <div class="input-timesheet">
-                        <div class="time-input-wrapper">
-                            <input type="tel" maxlength="5" id="time_loading_${idSuffix}" class="time-input" placeholder="00:00">
-                            <button type="button" class="btn-set-now" id="btn-set-now-loading-${idSuffix}"><i class="fa-regular fa-clock" style="color: var(--green);"></i></button>
-                        </div>
-                        <input type="text" id="kegiatan_loading_${idSuffix}" class="activity-input" placeholder="Ketik Aktivitas...">
-                        <button type="button" id="btn-add-loading-${idSuffix}" class="btn-add add-loading" data-suffix="${idSuffix}" data-category="loading"><i class="fa-solid fa-plus"></i></button>
+                        <div class="time-input-wrapper"><input type="tel" maxlength="5" id="time_loading_${idSuffix}" class="time-input" placeholder="00:00"><button type="button" class="btn-set-now" id="btn-set-now-loading-${idSuffix}"><i class="fa-regular fa-clock" style="color: var(--green);"></i></button></div>
+                        <input type="text" id="kegiatan_loading_${idSuffix}" class="activity-input" placeholder="Ketik Aktivitas..."><button type="button" id="btn-add-loading-${idSuffix}" class="btn-add add-loading" data-suffix="${idSuffix}" data-category="loading"><i class="fa-solid fa-plus"></i></button>
                     </div>
                     <div class="list-timesheet" id="list-loading-${idSuffix}"></div>
                     <div class="petugas-section">
-                        <div class="petugas-row">
-                            <div class="petugas-item"><label class="petugas-label">Tally Kapal</label><div class="input-with-icon"><i class="fa-solid fa-user-tie"></i><input type="text" name="tally_ship_${idSuffix}" placeholder="Nama Tally"></div></div>
-                            <div class="petugas-item"><label class="petugas-label">Operator</label><div class="input-with-icon"><i class="fa-solid fa-user-gear"></i><input type="text" name="operator_ship_${idSuffix}" placeholder="Nama Operator"></div></div>
-                            <div class="petugas-item"><label class="petugas-label">Forklift No.</label><div class="input-with-icon"><i class="fa-solid fa-hashtag"></i><input type="text" name="forklift_ship_${idSuffix}" placeholder="Unit"></div></div>
-                        </div>
-                        <div class="petugas-row">
-                            <div class="petugas-item" style="flex: 2;"><label class="petugas-label">Operator Gudang</label><div class="input-with-icon"><i class="fa-solid fa-helmet-safety"></i><input type="text" name="operator_warehouse_${idSuffix}" placeholder="Nama Operator"></div></div>
-                            <div class="petugas-item" style="flex: 1;"><label class="petugas-label">Forklift No.</label><div class="input-with-icon"><i class="fa-solid fa-hashtag"></i><input type="text" name="forklift_warehouse_${idSuffix}" placeholder="Unit"></div></div>
-                        </div>
+                        <div class="petugas-row"><div class="petugas-item"><label class="petugas-label">Tally Kapal</label><div class="input-with-icon"><i class="fa-solid fa-user-tie"></i><input type="text" name="tally_ship_${idSuffix}" placeholder="Nama Tally"></div></div><div class="petugas-item"><label class="petugas-label">Operator</label><div class="input-with-icon"><i class="fa-solid fa-user-gear"></i><input type="text" name="operator_ship_${idSuffix}" placeholder="Nama Operator"></div></div><div class="petugas-item"><label class="petugas-label">Forklift No.</label><div class="input-with-icon"><i class="fa-solid fa-hashtag"></i><input type="text" name="forklift_ship_${idSuffix}" placeholder="Unit"></div></div></div>
+                        <div class="petugas-row"><div class="petugas-item" style="flex: 2;"><label class="petugas-label">Operator Gudang</label><div class="input-with-icon"><i class="fa-solid fa-helmet-safety"></i><input type="text" name="operator_warehouse_${idSuffix}" placeholder="Nama Operator"></div></div><div class="petugas-item" style="flex: 1;"><label class="petugas-label">Forklift No.</label><div class="input-with-icon"><i class="fa-solid fa-hashtag"></i><input type="text" name="forklift_warehouse_${idSuffix}" placeholder="Unit"></div></div></div>
                     </div>
                 </div>
             </div>
@@ -576,6 +580,7 @@
     }
 
     function getUreaFormHTML(idSuffix) {
+        // ADDED step="any" to allow decimals
         return `
         <!-- FORM UTAMA: bulk_loading_activities -->
         <div class="bulk-loading-info d-flex flex-column align-items-start align-self-stretch" style="padding: 10px 0; gap: 15px;">
@@ -615,7 +620,7 @@
             <div class="input-bulk-loading">
                 <div class="input-item">
                     <label>Kapasitas / Partai (Ton)</label>
-                    <input type="number" name="capacity_urea_${idSuffix}" placeholder="0">
+                    <input type="number" step="any" name="capacity_urea_${idSuffix}" placeholder="0">
                 </div>
                 <div class="input-item">
                     <label>Tiba/Sandar</label>
@@ -643,7 +648,7 @@
 
                     <input type="text" id="input-datetime-urea-${idSuffix}" class="input-laporan flatpickr-datetime" style="width: 220px !important; flex-shrink: 0;" placeholder="Pilih Waktu">
                     <input type="text" id="input-activity-urea-${idSuffix}" class="input-laporan" style="flex: 1; min-width: 0; width: auto !important;" placeholder="Ketik Aktivitas">
-                    <input type="number" id="input-cob-urea-${idSuffix}" class="input-laporan" style="text-align: center; width:100px !important; flex-shrink: 0;" placeholder="COB">
+                    <input type="number" step="any" id="input-cob-urea-${idSuffix}" class="input-laporan" style="text-align: center; width:100px !important; flex-shrink: 0;" placeholder="COB">
 
                     <button type="button" id="btn-add-bulk-log-${idSuffix}" class="btn-add-laporan" data-suffix="${idSuffix}">
                         <i class="fa-solid fa-plus" style="color: #FDFDFD; font-size: 14px;"></i>
@@ -737,7 +742,7 @@
                     'inventory-table-body',
                     'shelter-table-body',
                     'shift-table-body',
-                    'op7-table-body',       // Added
+                    'op7-table-body',        // Added
                     'replacement-table-body' // Added
                 ];
 
@@ -913,12 +918,13 @@
     function addBahanRow() {
         bahanRowCount++;
         const tr = document.createElement('tr');
+        // ADDED step="any"
         tr.innerHTML = `
             <td class="align-middle row-num">${bahanRowCount}</td>
             <td><input type="text" class="form-control" name="unloading_materials[${bahanRowCount}][raw_material_type]"></td>
-            <td><input type="number" class="form-control qty-calc-bahan current" data-row="${bahanRowCount}" name="unloading_materials[${bahanRowCount}][qty_current]" placeholder="0"></td>
-            <td><input type="number" class="form-control qty-calc-bahan prev" data-row="${bahanRowCount}" name="unloading_materials[${bahanRowCount}][qty_prev]" placeholder="0"></td>
-            <td><input type="number" class="form-control accum" name="unloading_materials[${bahanRowCount}][qty_total]" placeholder="0" readonly style="background-color: var(--table-head-bg);"></td>
+            <td><input type="number" step="any" class="form-control qty-calc-bahan current" data-row="${bahanRowCount}" name="unloading_materials[${bahanRowCount}][qty_current]" placeholder="0"></td>
+            <td><input type="number" step="any" class="form-control qty-calc-bahan prev" data-row="${bahanRowCount}" name="unloading_materials[${bahanRowCount}][qty_prev]" placeholder="0"></td>
+            <td><input type="number" step="any" class="form-control accum" name="unloading_materials[${bahanRowCount}][qty_total]" placeholder="0" readonly style="background-color: var(--table-head-bg);"></td>
             <td class="align-middle"><button type="button" class="btn-delete-row" onclick="removeBahanRow(this)"><i class="fa-solid fa-trash-can"></i></button></td>
         `;
         bahanTableBody.appendChild(tr);
@@ -944,12 +950,13 @@
     function addContainerRow() {
         containerRowCount++;
         const tr = document.createElement('tr');
+        // ADDED step="any" just in case quantities are decimals
         tr.innerHTML = `
             <td class="align-middle row-num">${containerRowCount}</td>
             <td><input type="text" class="form-control flatpickr-time-only" name="unloading_containers[${containerRowCount}][time]" placeholder="00:00"></td>
-            <td><input type="number" class="form-control qty-calc-cont current" name="unloading_containers[${containerRowCount}][qty_current]" placeholder="0"></td>
-            <td><input type="number" class="form-control qty-calc-cont prev" name="unloading_containers[${containerRowCount}][qty_prev]" placeholder="0"></td>
-            <td><input type="number" class="form-control accum" name="unloading_containers[${containerRowCount}][qty_total]" placeholder="0" readonly style="background-color: var(--table-head-bg);"></td>
+            <td><input type="number" step="any" class="form-control qty-calc-cont current" name="unloading_containers[${containerRowCount}][qty_current]" placeholder="0"></td>
+            <td><input type="number" step="any" class="form-control qty-calc-cont prev" name="unloading_containers[${containerRowCount}][qty_prev]" placeholder="0"></td>
+            <td><input type="number" step="any" class="form-control accum" name="unloading_containers[${containerRowCount}][qty_total]" placeholder="0" readonly style="background-color: var(--table-head-bg);"></td>
             <td><select class="form-select" name="unloading_containers[${containerRowCount}][status]"><option value="Full">Full</option><option value="Empty">Empty</option></select></td>
             <td class="align-middle"><button type="button" class="btn-delete-row" onclick="removeContainerRow(this)"><i class="fa-solid fa-trash-can"></i></button></td>
         `;
@@ -982,15 +989,16 @@
         turbaRowCount++;
         const tr = document.createElement('tr');
         const name = initialData ? initialData.name : '';
+        // ADDED step="any"
         tr.innerHTML = `
             <td class="text-center align-middle row-num">${turbaRowCount}</td>
             <td><input type="text" class="form-control" name="turba_deliveries[${turbaRowCount}][truck_name]" value="${name}" placeholder="Pilih"></td>
             <td><input type="text" class="form-control" name="turba_deliveries[${turbaRowCount}][do_so_number]" placeholder="No. DO"></td>
-            <td><input type="number" class="form-control" name="turba_deliveries[${turbaRowCount}][capacity]" placeholder="0"></td>
+            <td><input type="number" step="any" class="form-control" name="turba_deliveries[${turbaRowCount}][capacity]" placeholder="0"></td>
             <td><input type="text" class="form-control" name="turba_deliveries[${turbaRowCount}][marking_type]" placeholder="Jenis Marking"></td>
-            <td><input type="number" class="form-control qty-calc current" data-row="${turbaRowCount}" name="turba_deliveries[${turbaRowCount}][qty_current]" placeholder="0"></td>
-            <td><input type="number" class="form-control qty-calc prev" data-row="${turbaRowCount}" name="turba_deliveries[${turbaRowCount}][qty_prev]" placeholder="0"></td>
-            <td><input type="number" class="form-control accum" name="turba_deliveries[${turbaRowCount}][qty_accumulated]" placeholder="0" readonly style="background-color: var(--table-head-bg);"></td>
+            <td><input type="number" step="any" class="form-control qty-calc current" data-row="${turbaRowCount}" name="turba_deliveries[${turbaRowCount}][qty_current]" placeholder="0"></td>
+            <td><input type="number" step="any" class="form-control qty-calc prev" data-row="${turbaRowCount}" name="turba_deliveries[${turbaRowCount}][qty_prev]" placeholder="0"></td>
+            <td><input type="number" step="any" class="form-control accum" name="turba_deliveries[${turbaRowCount}][qty_accumulated]" placeholder="0" readonly style="background-color: var(--table-head-bg);"></td>
             <td class="text-center align-middle"><button type="button" class="btn-delete-row" onclick="removeTurbaRow(this)"><i class="fa-solid fa-trash-can"></i></button></td>
         `;
         turbaTableBody.appendChild(tr);
@@ -1020,14 +1028,16 @@
         // Vehicle
         const vehicleBody = document.getElementById('vehicle-table-body');
         vehicleData.forEach((item, index) => {
-            vehicleBody.innerHTML += `<tr><td class="text-center">${index + 1}</td><td>${item.name}<input type="hidden" name="unit_logs[${index}][master_unit_id]" value="${item.id}"></td><td><input type="number" step="0.1" name="unit_logs[${index}][fuel_level]" class="form-control" placeholder="0"></td><td><select name="unit_logs[${index}][condition_received]" class="form-select status-select"><option value="" selected disabled>-</option><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></td><td><select name="unit_logs[${index}][condition_handed_over]" class="form-select status-select"><option value="" selected disabled>-</option><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></td></tr>`;
+            // UPDATED: Mengubah step="0.1" menjadi step="any" agar fleksibel untuk desimal berapapun
+            vehicleBody.innerHTML += `<tr><td class="text-center">${index + 1}</td><td>${item.name}<input type="hidden" name="unit_logs[${index}][master_unit_id]" value="${item.id}"></td><td><input type="number" step="any" name="unit_logs[${index}][fuel_level]" class="form-control" placeholder="0"></td><td><select name="unit_logs[${index}][condition_received]" class="form-select status-select"><option value="" selected disabled>-</option><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></td><td><select name="unit_logs[${index}][condition_handed_over]" class="form-select status-select"><option value="" selected disabled>-</option><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></td></tr>`;
         });
 
         // Inventory
         const inventoryBody = document.getElementById('inventory-table-body');
         inventoryData.forEach((item, index) => {
             const defaultQty = item.qty || 1;
-            inventoryBody.innerHTML += `<tr><td class="text-center">${index + 1}</td><td>${item.name}<input type="hidden" name="inventory_logs[${index}][master_inventory_item_id]" value="${item.id}"></td><td><input type="number" name="inventory_logs[${index}][quantity]" class="form-control" value="${defaultQty}"></td><td><select name="inventory_logs[${index}][condition_received]" class="form-select status-select"><option value="" selected disabled>-</option><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></td><td><select name="inventory_logs[${index}][condition_handed_over]" class="form-select status-select"><option value="" selected disabled>-</option><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></td></tr>`;
+            // UPDATED: Menambahkan step="any" pada input quantity inventaris
+            inventoryBody.innerHTML += `<tr><td class="text-center">${index + 1}</td><td>${item.name}<input type="hidden" name="inventory_logs[${index}][master_inventory_item_id]" value="${item.id}"></td><td><input type="number" step="any" name="inventory_logs[${index}][quantity]" class="form-control" value="${defaultQty}"></td><td><select name="inventory_logs[${index}][condition_received]" class="form-select status-select"><option value="" selected disabled>-</option><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></td><td><select name="inventory_logs[${index}][condition_handed_over]" class="form-select status-select"><option value="" selected disabled>-</option><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></td></tr>`;
         });
 
         // Shelter

@@ -2,7 +2,7 @@
     <div class="title-content d-flex flex-column align-items-start" style="gap: 6px;">
         {{-- Judul Dinamis: Menggunakan variabel $title, default ke 'Form Laporan Shift Harian' --}}
         <span class="title-text align-self-stretch" style="font-size: 20px; font-weight: 600;">
-          Form Laporan Shift Harian
+            Edit Laporan Shift Harian
         </span>
 
         {{-- ID Laporan Dinamis: Menampilkan ID jika ada, atau '-' jika baru --}}

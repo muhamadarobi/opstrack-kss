@@ -16,35 +16,14 @@ use Carbon\Carbon;
 class ReportController extends Controller
 {
     /**
-     * Menampilkan Halaman Form Pembuatan Laporan
-     */
-    public function create()
-    {
-        $vehicles = MasterUnit::select('id', 'name')->orderBy('id', 'asc')->get();
-        $inventories = MasterInventoryItem::select('id', 'name', 'stock as qty')->orderBy('id', 'asc')->get();
-
-        // Ambil Data Karyawan Group A-D
-        $employeesGrouped = MasterEmployee::where('status', 'active')
-                                          ->orderBy('id', 'asc') // Order by ID agar urutan konsisten
-                                          ->get()
-                                          ->groupBy('group_name');
-
-        return view('officer.create', compact('vehicles', 'inventories', 'employeesGrouped'));
-    }
-
-    /**
-     * Menampilkan Halaman Riwayat & Approval
+     * Menampilkan Halaman Riwayat & Approval (Dashboard Officer)
      */
     public function history()
     {
         $user = Auth::user();
+        $userGroup = $user->group; // Asumsi: Kolom 'group' ada di tabel users (enum: a, b, c, d)
 
-        // Asumsi: Kolom 'group' ada di tabel users (enum: a, b, c, d)
-        $userGroup = $user->group;
-
-        // ------------------------------------------------------------------
         // 1. DATA TABEL ATAS: Laporan Masuk (Perlu Tanda Tangan)
-        // ------------------------------------------------------------------
         $pendingReports = DailyReport::with('creator')
             ->where('received_by_group', $userGroup) // Laporan yang ditujukan ke group user ini
             ->where('status', 'submitted')           // Status masih 'submitted' (belum diterima)
@@ -57,9 +36,7 @@ class ReportController extends Controller
             return $item;
         });
 
-        // ------------------------------------------------------------------
         // 2. DATA TABEL BAWAH: Riwayat Laporan Group User
-        // ------------------------------------------------------------------
         $groupReports = DailyReport::with(['creator', 'receiver', 'approver'])
             ->where('group_name', $userGroup)
             ->orderBy('report_date', 'desc')
@@ -75,66 +52,24 @@ class ReportController extends Controller
     }
 
     /**
-     * PROSES TANDA TANGAN (Action dari Tombol TTD)
-     * Route: GET /reports/{id}/sign
+     * Menampilkan Halaman Form Pembuatan Laporan Baru
      */
-    public function sign($id)
+    public function create()
     {
-        $user = Auth::user();
-        $report = DailyReport::findOrFail($id);
+        $vehicles = MasterUnit::select('id', 'name')->orderBy('id', 'asc')->get();
+        $inventories = MasterInventoryItem::select('id', 'name', 'stock as qty')->orderBy('id', 'asc')->get();
 
-        try {
-            // LOGIKA 1: PENERIMA LAPORAN (Shift Selanjutnya)
-            if ($report->status === 'submitted') {
-                $report->update([
-                    'status' => 'acknowledged',         // Naikkan status
-                    'received_by_user_id' => $user->id, // User yang login saat ini
-                    'received_at' => Carbon::now(),     // Waktu sekarang
-                ]);
+        // Ambil Data Karyawan Group A-D
+        $employeesGrouped = MasterEmployee::where('status', 'active')
+                                          ->orderBy('id', 'asc')
+                                          ->get()
+                                          ->groupBy('group_name');
 
-                return back()->with('success', 'Laporan berhasil diterima dan ditanda tangani (Handover).');
-            }
-
-            // LOGIKA 2: MANAJER (Approval Akhir)
-            if ($report->status === 'acknowledged') {
-                $report->update([
-                    'status' => 'approved',       // Status Final
-                    'approved_by' => $user->id,   // User yang login
-                    'approved_at' => Carbon::now(),
-                ]);
-
-                return back()->with('success', 'Laporan berhasil disetujui (Approved).');
-            }
-
-            return back()->with('error', 'Status laporan tidak valid untuk ditanda tangani.');
-
-        } catch (Exception $e) {
-            return back()->with('error', 'Gagal memproses tanda tangan: ' . $e->getMessage());
-        }
+        return view('officer.create', compact('vehicles', 'inventories', 'employeesGrouped'));
     }
 
     /**
-     * Menampilkan Detail Laporan (Show)
-     */
-    public function show($id)
-    {
-        // Eager load semua relasi agar efisien
-        $report = DailyReport::with([
-            'creator', 'receiver', 'approver',
-            'loadingActivities.timesheets',
-            'bulkLoadingActivities.logs',
-            'materialActivity.items',
-            'containerActivity.items',
-            'turbaActivity.deliveries',
-            'unitCheckLogs',
-            'employeeLogs'
-        ])->findOrFail($id);
-
-        return view('officer.pdf', compact('report')); // Sementara pakai view PDF untuk preview HTML
-    }
-
-    /**
-     * Menyimpan Data Laporan Baru
+     * Menyimpan Data Laporan Baru (Store)
      */
     public function store(Request $request)
     {
@@ -154,6 +89,7 @@ class ReportController extends Controller
                 'created_by'        => $user->id,
             ]);
 
+            // 2. SIMPAN DETAILS
             $this->storeDetails($report, $request);
 
             DB::commit();
@@ -166,12 +102,108 @@ class ReportController extends Controller
     }
 
     /**
-     * Helper untuk menyimpan detail
+     * Menampilkan Halaman Edit Laporan
+     */
+    public function edit($id)
+    {
+        $report = DailyReport::with([
+            'loadingActivities.timesheets',
+            'bulkLoadingActivities.logs',
+            'materialActivity.items',
+            'containerActivity.items',
+            'turbaActivity.deliveries',
+            'unitCheckLogs',
+            'employeeLogs'
+        ])->findOrFail($id);
+
+        // Validasi: Hanya bisa edit jika status 'submitted' (belum ditandatangani penerima)
+        if ($report->status !== 'submitted') {
+            return redirect()->route('reports.index')->with('error', 'Laporan yang sudah ditanda tangani/diterima tidak dapat diedit.');
+        }
+
+        $vehicles = MasterUnit::select('id', 'name')->orderBy('id', 'asc')->get();
+        $inventories = MasterInventoryItem::select('id', 'name', 'stock as qty')->orderBy('id', 'asc')->get();
+
+        $employeesGrouped = MasterEmployee::where('status', 'active')
+                                          ->orderBy('id', 'asc')
+                                          ->get()
+                                          ->groupBy('group_name');
+
+        return view('officer.edit', compact('report', 'vehicles', 'inventories', 'employeesGrouped'));
+    }
+
+    /**
+     * Memperbarui Data Laporan (Update)
+     */
+    public function update(Request $request, $id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $report = DailyReport::findOrFail($id);
+
+            // Validasi status lagi untuk keamanan
+            if ($report->status !== 'submitted') {
+                return redirect()->route('reports.index')->with('error', 'Laporan tidak dapat diedit karena status sudah berubah.');
+            }
+
+            // 1. UPDATE PARENT DATA
+            $report->update([
+                'report_date'       => $request->report_date,
+                'shift'             => $request->shift,
+                'group_name'        => $request->group_name,
+                'received_by_group' => $request->received_by_group,
+                'time_range'        => $request->time_range,
+                // Status & Created By tidak berubah
+            ]);
+
+            // 2. HAPUS SEMUA DATA DETAIL LAMA (Reset Strategy)
+            // Ini cara teraman untuk menangani dynamic rows yang bisa bertambah/berkurang/berubah urutan
+
+            // Hapus Loading Activities & Timesheets
+            $report->loadingActivities()->each(function($a) { $a->timesheets()->delete(); $a->delete(); });
+
+            // Hapus Bulk Loading & Logs
+            $report->bulkLoadingActivities()->each(function($a) { $a->logs()->delete(); $a->delete(); });
+
+            // Hapus Material & Container Activities
+            if($report->materialActivity) {
+                $report->materialActivity->items()->delete();
+                $report->materialActivity->delete();
+            }
+            if($report->containerActivity) {
+                $report->containerActivity->items()->delete();
+                $report->containerActivity->delete();
+            }
+
+            // Hapus Turba & Deliveries
+            if($report->turbaActivity) {
+                $report->turbaActivity->deliveries()->delete();
+                $report->turbaActivity->delete();
+            }
+
+            // Hapus Logs Unit & Karyawan
+            $report->unitCheckLogs()->delete();
+            $report->employeeLogs()->delete();
+
+            // 3. SIMPAN ULANG DATA DETAIL BARU
+            $this->storeDetails($report, $request);
+
+            DB::commit();
+            return redirect()->route('reports.index')->with('success', 'Laporan Harian berhasil diperbarui.');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat update: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Helper Function: Menyimpan Detail Laporan (Digunakan oleh store & update)
      */
     private function storeDetails($report, $request)
     {
-        // 2. SECTION: MUAT KANTONG
-        // UPDATED: Loop hingga 20 agar bisa menampung tab tambahan
+        // 2. SECTION: MUAT KANTONG (Loop 1-20 untuk mengakomodasi tab dinamis)
         for ($i = 1; $i <= 20; $i++) {
             if ($request->filled("ship_name_{$i}")) {
                 $loadingActivity = $report->loadingActivities()->create([
@@ -220,8 +252,7 @@ class ReportController extends Controller
             }
         }
 
-        // 3. SECTION: MUAT UREA
-        // UPDATED: Diubah dari 2 menjadi 20 agar support dynamic tabs
+        // 3. SECTION: MUAT UREA (Loop 1-20)
         for ($i = 1; $i <= 20; $i++) {
             if ($request->filled("ship_name_urea_{$i}")) {
                 $bulkActivity = $report->bulkLoadingActivities()->create([
@@ -324,7 +355,7 @@ class ReportController extends Controller
             }
         }
 
-        // 7. CEK UNIT
+        // 7. CEK UNIT (Vehicle, Inventory, Shelter)
         if ($request->has('unit_logs')) {
             foreach ($request->unit_logs as $log) {
                 $report->unitCheckLogs()->create([
@@ -362,7 +393,7 @@ class ReportController extends Controller
 
         // 8. EMPLOYEES LOGS
         // a. Shift
-        for ($s = 1; $s <= 14; $s++) {
+        for ($s = 1; $s <= 20; $s++) {
             if ($request->filled("shift_nama_{$s}")) {
                 $report->employeeLogs()->create([
                     'category'    => 'shift',
@@ -398,13 +429,13 @@ class ReportController extends Controller
                     'category'       => 'lain',
                     'description'    => $request->input("kegiatan_desc_{$l}"),
                     'name'           => $request->input("kegiatan_personil_{$l}"),
-                    'personil_count' => $request->input("kegiatan_personil_{$l}"),
+                    'personil_count' => $request->input("kegiatan_personil_{$l}"), // Asumsi nama kolom DB personil_count/name sama
                     'time_in'        => $request->input("kegiatan_jam_{$l}"),
                 ]);
             }
         }
 
-        // d. OP.7 (BARU)
+        // d. OP.7 (BARU - Support Edit)
         if ($request->has('op7_logs')) {
             foreach ($request->op7_logs as $log) {
                 if (!empty($log['name'])) {
@@ -413,15 +444,15 @@ class ReportController extends Controller
                         'name'        => $log['name'],
                         'time_in'     => $log['time_in'] ?? null,
                         'time_out'    => $log['time_out'] ?? null,
-                        'work_area'   => $log['work_area'] ?? null,       // Simpan di kolom work_area
-                        'no_forklift_' => $log['no_forklift_'] ?? null,    // Simpan di kolom no_forklift
-                        'description' => $log['description'] ?? null,     // Deskripsi tetap deskripsi
+                        'work_area'   => $log['work_area'] ?? null,
+                        'no_forklift_' => $log['no_forklift_'] ?? null,
+                        'description' => $log['description'] ?? null,
                     ]);
                 }
             }
         }
 
-        // e. PENGGANTI (BARU)
+        // e. PENGGANTI (BARU - Support Edit)
         if ($request->has('replacement_logs')) {
             foreach ($request->replacement_logs as $log) {
                 if (!empty($log['name'])) {
@@ -430,21 +461,22 @@ class ReportController extends Controller
                         'name'        => $log['name'],
                         'time_in'     => $log['time_in'] ?? null,
                         'time_out'    => $log['time_out'] ?? null,
-                        'work_area'   => $log['work_area'] ?? null,       // Simpan di kolom work_area
-                        'no_forklift_' => $log['no_forklift_'] ?? null,    // Simpan di kolom no_forklift
-                        'description' => $log['description'] ?? null,     // Deskripsi tetap deskripsi
+                        'work_area'   => $log['work_area'] ?? null,
+                        'no_forklift_' => $log['no_forklift_'] ?? null,
+                        'description' => $log['description'] ?? null,
                     ]);
                 }
             }
         }
     }
 
-    public function exportPdf($id)
+    /**
+     * Menampilkan Detail Laporan (Show Preview)
+     */
+    public function show($id)
     {
         $report = DailyReport::with([
-            'creator', // User Pembuat
-            'receiver', // User Penerima
-            'approver', // Manajer
+            'creator', 'receiver', 'approver',
             'loadingActivities.timesheets',
             'bulkLoadingActivities.logs',
             'materialActivity.items',
@@ -454,10 +486,74 @@ class ReportController extends Controller
             'employeeLogs'
         ])->findOrFail($id);
 
-        $pdf = Pdf::loadView('officer.pdf', compact('report'));
+        // Kirim isPdf = false karena ini tampilan HTML browser
+        $isPdf = false;
 
-        $custom_paper = array(0, 0, 612.00, 1008.00);
+        return view('officer.pdf', compact('report', 'isPdf'));
+    }
+
+    /**
+     * Action Tanda Tangan (Sign)
+     */
+    public function sign($id)
+    {
+        $user = Auth::user();
+        $report = DailyReport::findOrFail($id);
+
+        try {
+            // LOGIKA 1: PENERIMA LAPORAN (Handover Shift)
+            if ($report->status === 'submitted') {
+                $report->update([
+                    'status' => 'acknowledged',
+                    'received_by_user_id' => $user->id,
+                    'received_at' => Carbon::now(),
+                ]);
+                return back()->with('success', 'Laporan berhasil diterima dan ditanda tangani (Handover).');
+            }
+
+            // LOGIKA 2: MANAJER (Approval Akhir)
+            if ($report->status === 'acknowledged') {
+                $report->update([
+                    'status' => 'approved',
+                    'approved_by' => $user->id,
+                    'approved_at' => Carbon::now(),
+                ]);
+                return back()->with('success', 'Laporan berhasil disetujui (Approved).');
+            }
+
+            return back()->with('error', 'Status laporan tidak valid untuk ditanda tangani.');
+
+        } catch (Exception $e) {
+            return back()->with('error', 'Gagal memproses tanda tangan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export Laporan ke PDF
+     */
+    public function exportPdf($id)
+    {
+        $report = DailyReport::with([
+            'creator', 'receiver', 'approver',
+            'loadingActivities.timesheets',
+            'bulkLoadingActivities.logs',
+            'materialActivity.items',
+            'containerActivity.items',
+            'turbaActivity.deliveries',
+            'unitCheckLogs',
+            'employeeLogs'
+        ])->findOrFail($id);
+
+        // Kirim isPdf = true agar view menggunakan public_path()
+        $isPdf = true;
+
+        $pdf = Pdf::loadView('officer.pdf', compact('report', 'isPdf'));
+
+        $custom_paper = array(0, 0, 612.00, 1008.00); // Ukuran Legal Custom
         $pdf->setPaper($custom_paper, 'portrait');
+
+        // Opsi tambahan untuk performa (Opsional)
+        $pdf->setOption('isRemoteEnabled', true);
 
         return $pdf->stream('Laporan-Harian-Shift-' . $report->id . '.pdf');
     }

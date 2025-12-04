@@ -358,7 +358,55 @@
 
     .empty-state { padding: 50px; text-align: center; color: var(--text-muted); }
     .empty-icon { font-size: 40px; margin-bottom: 15px; opacity: 0.3; }
-    .pagination-wrapper { padding: 20px 25px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; }
+
+    /* --- CUSTOM PAGINATION STYLE (NEW) --- */
+    .pagination-wrapper {
+        padding: 20px 25px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* Override Bootstrap Pagination for Custom Look */
+    .pagination-wrapper .pagination {
+        margin-bottom: 0;
+        gap: 5px;
+    }
+
+    .pagination-wrapper .page-item .page-link {
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+        border-radius: 8px; /* Rounded corners */
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        background-color: transparent;
+    }
+
+    /* Active State */
+    .pagination-wrapper .page-item.active .page-link {
+        background-color: var(--blue-kss);
+        border-color: var(--blue-kss);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(0, 119, 194, 0.2);
+    }
+
+    /* Hover State */
+    .pagination-wrapper .page-item:not(.active):not(.disabled) .page-link:hover {
+        background-color: var(--hover-bg);
+        color: var(--blue-kss);
+        border-color: var(--blue-kss);
+        transform: translateY(-1px);
+    }
+
+    /* Disabled State */
+    .pagination-wrapper .page-item.disabled .page-link {
+        background-color: var(--bg-body);
+        color: #d1d5db;
+        border-color: var(--border-color);
+        cursor: not-allowed;
+    }
 </style>
 @endpush
 
@@ -394,15 +442,22 @@
 
         <!-- TAB NAVIGATION SYSTEM -->
         <div class="tabs-wrapper">
+            @php
+                // LOGIKA PERBAIKAN: Deteksi parameter 'page' di URL
+                // Jika ada ?page=X, otomatis set tab aktif ke 'History' (Riwayat Group)
+                $isHistoryTabActive = request()->has('page');
+            @endphp
+
             <!-- Buttons Tab -->
             <div class="tab-nav">
-                <button class="tab-item active" data-target="tab-pending">
+                <!-- Tambahkan logika kondisional class active -->
+                <button class="tab-item {{ !$isHistoryTabActive ? 'active' : '' }}" data-target="tab-pending">
                     Laporan Masuk
                     @if(isset($pendingReports) && $pendingReports->count() > 0)
                         <span class="tab-badge">{{ $pendingReports->count() }}</span>
                     @endif
                 </button>
-                <button class="tab-item" data-target="tab-history">
+                <button class="tab-item {{ $isHistoryTabActive ? 'active' : '' }}" data-target="tab-history">
                     Riwayat Group
                 </button>
             </div>
@@ -413,7 +468,8 @@
                 <!-- ============================================
                      TAB 1: LAPORAN MASUK (PERLU TANDA TANGAN)
                      ============================================ -->
-                <div id="tab-pending" class="tab-pane active">
+                <!-- Tambahkan logika kondisional class active -->
+                <div id="tab-pending" class="tab-pane {{ !$isHistoryTabActive ? 'active' : '' }}">
                     <div class="table-card pending-section">
                         <div class="card-header-custom">
                             <span class="card-title">
@@ -493,7 +549,8 @@
                 <!-- ============================================
                      TAB 2: RIWAYAT LAPORAN GROUP USER
                      ============================================ -->
-                <div id="tab-history" class="tab-pane">
+                <!-- Tambahkan logika kondisional class active -->
+                <div id="tab-history" class="tab-pane {{ $isHistoryTabActive ? 'active' : '' }}">
                     <div class="table-card">
                         <div class="card-header-custom">
                             <span class="card-title">
@@ -546,11 +603,20 @@
                                             </td>
                                             <td class="col-aksi">
                                                 <div class="action-group">
-                                                    <a href="{{ route('reports.export_pdf', $report->id) }}" class="btn-icon view" title="Cetak PDF" target="_blank">
-                                                        <i class="fa-solid fa-print"></i>
+                                                    {{-- Tombol Lihat --}}
+                                                    <a href="{{ route('reports.show', $report->id) }}" target="_blank" class="btn-icon view" title="Lihat Detail">
+                                                        <i class="fa-regular fa-eye"></i>
                                                     </a>
-                                                    <!-- Tombol Edit (Opsional) -->
-                                                    <!-- <a href="#" class="btn-icon edit"><i class="fa-solid fa-pencil"></i></a> -->
+
+                                                    {{-- TOMBOL EDIT BARU --}}
+                                                    @if($report->status === 'submitted')
+                                                    <a href="{{ route('reports.edit', $report->id) }}" class="btn-icon edit" title="Edit Laporan">
+                                                        <i class="fa-solid fa-pencil"></i>
+                                                    </a>
+                                                    @endif
+
+                                                    {{-- Tombol Tanda Tangan (Hanya di Tab Pending, bukan di History Group ini) --}}
+                                                    {{-- Logika ini disesuaikan dengan tab mana user berada --}}
                                                 </div>
                                             </td>
                                         </tr>
@@ -567,9 +633,10 @@
                         </div>
 
                         <!-- Pagination untuk Tabel Riwayat -->
+                        <!-- Menggunakan 'pagination::bootstrap-4' untuk memastikan struktur HTML sesuai dengan CSS Custom -->
                         @if(isset($groupReports) && $groupReports instanceof \Illuminate\Pagination\LengthAwarePaginator)
                             <div class="pagination-wrapper">
-                                {{ $groupReports->links() }}
+                                {{ $groupReports->onEachSide(1)->links('pagination::bootstrap-4') }}
                             </div>
                         @endif
                     </div>

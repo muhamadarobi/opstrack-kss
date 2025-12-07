@@ -24,7 +24,7 @@
                 </div>
                 <div class="input-deliv-info d-flex flex-column justify-content-center align-items-start" style="gap: 5px; flex: 1 0 0; min-width: 300px;">
                     <label>jam kerja</label>
-                    <input type="text" name="turba_working_hours" class="flatpickr-time-only" placeholder="00:00">
+                    <input type="text" name="turba_working_hours" class="form-control" placeholder="00:00 - 00:00">
                 </div>
             </div>
         </div>

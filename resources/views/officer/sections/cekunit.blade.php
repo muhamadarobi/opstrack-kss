@@ -32,7 +32,7 @@
                             <tr>
                                 <th rowspan="2" style="width: 40px;">NO.</th>
                                 <th rowspan="2">NAMA ALAT</th>
-                                <th rowspan="2" style="width: 120px;">SISA BBM (LITER)</th>
+                                <th rowspan="2" style="width: 120px;">ISI BBM (LITER)</th>
                                 <th colspan="2">KONDISI UNIT</th>
                             </tr>
                             <tr>

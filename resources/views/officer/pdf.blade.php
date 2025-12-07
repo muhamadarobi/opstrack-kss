@@ -464,7 +464,6 @@
                 <td class="w-33" style="padding: 1px;">> Jam Kerja : {{ $report->turbaActivity->working_hours }}</td>
             </tr>
             <tr>
-                <td class="w-33" style="padding: 1px;">> Tally Muat : -</td>
                 <td colspan="2" style="padding: 1px;">> Driver : {{ $report->turbaActivity->driver_names }}</td>
             </tr>
         </table>
@@ -490,7 +489,7 @@
                             <td class="w-50 p-0" style="vertical-align: top;">
                                 <table class="table-bordered w-100 tiny-text">
                                     <tr class="bg-gray">
-                                        <th rowspan="2" style="width:15px;">NO</th><th rowspan="2">NAMA ALAT</th><th rowspan="2" style="width:20px;">BBM</th><th colspan="2">KONDISI</th>
+                                        <th rowspan="2" style="width:15px;">NO</th><th rowspan="2">NAMA ALAT</th><th rowspan="2" style="width:20px;">ISI BBM</th><th colspan="2">KONDISI</th>
                                     </tr>
                                     <!-- EDIT 1: UBAH TRM/SRH MENJADI TERIMA/SERAHKAN -->
                                     <tr class="bg-gray"><th style="width:20px;">TERIMA</th><th style="width:20px;">SERAHKAN</th></tr>

@@ -11,7 +11,7 @@
                 <button class="nav-link active" id="pills-shift-tab" data-bs-toggle="pill" data-bs-target="#pills-shift" type="button" role="tab" aria-controls="pills-shift" aria-selected="true">Karyawan Shift</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pills-operasi-tab" data-bs-toggle="pill" data-bs-target="#pills-operasi" type="button" role="tab" aria-controls="pills-operasi" aria-selected="false">Karyawan Operasi</button>
+                <button class="nav-link" id="pills-operasi-tab" data-bs-toggle="pill" data-bs-target="#pills-operasi" type="button" role="tab" aria-controls="pills-operasi" aria-selected="false">Karyawan Operasi Relief & Lembur</button>
             </li>
             <!-- TAB Op.7 & Pengganti -->
             <li class="nav-item" role="presentation">
@@ -50,7 +50,7 @@
                     <table class="table table-bordered text-center">
                         <thead>
                             <tr>
-                                <th colspan="4" style="font-size: 14px; background-color: var(--orange-kss);">KARYAWAN OPERASI</th>
+                                <th colspan="4" style="font-size: 14px; background-color: var(--orange-kss);">KARYAWAN OPERASI RELIEF & LEMBUR</th>
                             </tr>
                             <tr>
                                 <th style="width: 60px;">NO.</th>

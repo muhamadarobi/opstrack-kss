@@ -233,30 +233,6 @@
         });
     }
 
-    // --- LOGIC HANDLING ABSENSI TIDAK MASUK (SHIFT) ---
-    function checkShiftAttendance(selectElement, index) {
-        if (selectElement.value === "Tidak Masuk") {
-            const inputMasuk = document.querySelector(`input[name="shift_masuk_${index}"]`);
-            const inputPulang = document.querySelector(`input[name="shift_pulang_${index}"]`);
-            if (inputMasuk) inputMasuk.value = "";
-            if (inputPulang) inputPulang.value = "";
-        }
-    }
-
-    // --- LOGIC HANDLING ABSENSI TIDAK HADIR (OP.7) [MODIFIED] ---
-    function checkOp7Attendance(selectElement) {
-        if (selectElement.value === "Tidak Hadir") {
-            const row = selectElement.closest('tr');
-            if (row) {
-                // Selektor disesuaikan dengan nama input di addOp7Row
-                const timeIn = row.querySelector('input[name*="[time_in]"]');
-                const timeOut = row.querySelector('input[name*="[time_out]"]');
-                if (timeIn) timeIn.value = "";
-                if (timeOut) timeOut.value = "";
-            }
-        }
-    }
-
     // --- LOGIC AUTO FILL EMPLOYEE (SHIFT) ---
     function autoFillEmployees() {
         const groupSelect = document.getElementById('group_name');
@@ -317,12 +293,7 @@
                     <td><input type="text" class="form-control" name="shift_nama_${i}" value="${valNama}"></td>
                     <td><input type="text" class="form-control flatpickr-time" name="shift_masuk_${i}" placeholder="00:00" value="${valMasuk}"></td>
                     <td><input type="text" class="form-control flatpickr-time" name="shift_pulang_${i}" placeholder="00:00" value="${valPulang}"></td>
-                    <td>
-                        <select class="form-select" name="shift_ket_${i}" onchange="checkShiftAttendance(this, ${i})">
-                            <option value=""></option>
-                            <option value="Tidak Masuk">Tidak Masuk</option>
-                        </select>
-                    </td>
+                    <td><input type="text" class="form-control" name="shift_ket_${i}" placeholder="Keterangan"></td>
                 </tr>
             `;
         }
@@ -607,12 +578,12 @@
                     <input type="text" name="agent_urea_${idSuffix}" placeholder="Nama Agen">
                 </div>
                 <div class="input-item">
-                    <label>PBM (Stevedoring)</label>
-                    <input type="text" name="stevedoring_urea_${idSuffix}" placeholder="Nama PBM">
+                    <label>Petugas PBM (Stevedoring)</label>
+                    <input type="text" name="stevedoring_urea_${idSuffix}" placeholder="Nama Petugas">
                 </div>
                 <div class="input-item">
-                    <label>Komoditas</label>
-                    <input type="text" name="commodity_urea_${idSuffix}">
+                    <label>Jenis Urea</label>
+                    <input type="text" name="commodity_urea_${idSuffix}" placeholder="Jenis Urea">
                 </div>
             </div>
 
@@ -1087,12 +1058,7 @@
             <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][work_area]" value="${areaVal}" placeholder="Area"></td>
             <td><input type="text" class="form-control flatpickr-time" name="op7_logs[${op7RowCount}][time_in]" placeholder="00:00" value="${timeInVal}"></td>
             <td><input type="text" class="form-control flatpickr-time" name="op7_logs[${op7RowCount}][time_out]" placeholder="00:00" value="${timeOutVal}"></td>
-            <td>
-                <select class="form-select" name="op7_logs[${op7RowCount}][description]" onchange="checkOp7Attendance(this)">
-                    <option value=""></option>
-                    <option value="Tidak Hadir">Tidak Hadir</option>
-                </select>
-            </td>
+            <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][description]" placeholder="Keterangan"></td>
             <td class="align-middle text-center"><i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--redcolor);" onclick="this.closest('tr').remove()"></i></td>
         `;
         tbody.appendChild(tr);

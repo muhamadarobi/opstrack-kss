@@ -5,7 +5,7 @@
 
         <div class="button-tab d-flex align-items-center align-content-center align-self-stretch flex-wrap" style="gap: 15px;">
             <a id="btn-tab-bahan-baku" class="unload-tab active material btn" style="background-color: var(--blue-kss); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer;" onclick="switchBongkarTab('bahan')">bongkar bahan baku</a>
-            <a id="btn-tab-container" class="unload-tab material btn" style="background-color: var(--green);  color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer;" onclick="switchBongkarTab('container')">bongkar container</a>
+            <a id="btn-tab-container" class="unload-tab material btn" style="background-color: var(--green);  color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer;" onclick="switchBongkarTab('container')">bongkar/muat container</a>
         </div>
 
         <!-- CONTENT 1: BONGKAR BAHAN BAKU -->
@@ -85,7 +85,7 @@
                         <div class="input-material-info d-flex flex-column align-items-start align-self-stretch" style="gap: 6px; flex: 1 0 0; min-width: 200px;">
                             <label>Jam Kerja</label>
                             <!-- Change Name to match controller -->
-                            <input type="text" name="material_working_hours" class="form-control flatpickr-time-only" placeholder="00:00">
+                            <input type="text" name="material_working_hours" class="form-control" placeholder="00:00 - 00:00">
                         </div>
                     </div>
                 </div>

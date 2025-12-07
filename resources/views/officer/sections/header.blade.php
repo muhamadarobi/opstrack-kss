@@ -14,10 +14,10 @@
          style="gap: 10px; flex: 1 0 0;">
         <a class="tab active d-flex justify-content-center align-items-center" onclick="showSection('section-info-umum', this)">Info Umum</a>
         <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-muat-kantong', this)">Muat Kantong</a>
-        <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-muat-urea', this)">Muat Urea</a>
+        <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-muat-urea', this)">Muat Urea Curah</a>
         <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-bongkar', this)">Bongkar</a>
-        <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-gudang-turba', this)">Gudang Turba</a>
-        <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-gudang-cek-unit', this)">Gudang Cek Unit</a>
-        <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-gudang-karyawan', this)">Gudang Karyawan</a>
+        <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-gudang-turba', this)">Tracking</a>
+        <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-gudang-cek-unit', this)">Cek Unit</a>
+        <a class="tab d-flex justify-content-center align-items-center" onclick="showSection('section-gudang-karyawan', this)">Karyawan</a>
     </div>
 </div>

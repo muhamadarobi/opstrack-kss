@@ -393,7 +393,7 @@ class ReportController extends Controller
 
         // 8. EMPLOYEES LOGS
         // a. Shift
-        for ($s = 1; $s <= 20; $s++) {
+        for ($s = 1; $s <= 30; $s++) {
             if ($request->filled("shift_nama_{$s}")) {
                 $report->employeeLogs()->create([
                     'category'    => 'shift',
@@ -405,7 +405,7 @@ class ReportController extends Controller
             }
         }
         // b. Operasi (Lembur & Relief)
-        for ($o = 1; $o <= 7; $o++) {
+        for ($o = 1; $o <= 15; $o++) {
             if ($request->filled("lembur_{$o}")) {
                 $report->employeeLogs()->create([
                     'category'    => 'operasi',
@@ -413,7 +413,7 @@ class ReportController extends Controller
                     'description' => 'Lembur',
                 ]);
             }
-            $reliefIndex = $o + 7;
+            $reliefIndex = $o + 15;
             if ($request->filled("relief_{$reliefIndex}")) {
                 $report->employeeLogs()->create([
                     'category'    => 'operasi',
@@ -430,7 +430,7 @@ class ReportController extends Controller
                     'description'    => $request->input("kegiatan_desc_{$l}"),
                     'name'           => $request->input("kegiatan_personil_{$l}"),
                     'personil_count' => $request->input("kegiatan_personil_{$l}"), // Asumsi nama kolom DB personil_count/name sama
-                    'time_in'        => $request->input("kegiatan_jam_{$l}"),
+                    'work_time'        => $request->input("kegiatan_jam_{$l}"),
                 ]);
             }
         }

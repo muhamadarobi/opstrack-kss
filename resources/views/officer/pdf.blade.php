@@ -315,7 +315,10 @@
                 <tr class="bg-gray">
                     <th style="width: 15%;">TANGGAL</th><th style="width: 10%;">JAM</th><th>URAIAN KEGIATAN</th><th style="width: 10%;">COB</th>
                 </tr>
-                @php $bLogs = $bulk ? $bulk->logs : collect([]); @endphp
+                @php
+                    // UPDATED: Sort data berdasarkan datetime ascending (lebih lama/tua dulu)
+                    $bLogs = $bulk ? $bulk->logs->sortBy('datetime') : collect([]);
+                @endphp
                 @foreach($bLogs as $log)
                 <tr>
                     <td class="text-center">{{ \Carbon\Carbon::parse($log->datetime)->translatedFormat('d M Y') }}</td>
@@ -603,11 +606,11 @@
                             $lemburEmps = $report->employeeLogs->where('category', 'operasi')->where('description', 'Lembur')->values();
                             $reliefEmps = $report->employeeLogs->where('category', 'operasi')->where('description', 'Relief Malam')->values();
                         @endphp
-                        @for($j=0; $j<7; $j++)
+                        @for($j=0; $j<15; $j++)
                         <tr>
                             <td class="text-center">{{ $j+1 }}</td>
                             <td>{{ isset($lemburEmps[$j]) ? $lemburEmps[$j]->name : '' }}</td>
-                            <td class="text-center">{{ $j+8 }}</td>
+                            <td class="text-center">{{ $j+16 }}</td>
                             <td>{{ isset($reliefEmps[$j]) ? $reliefEmps[$j]->name : '' }}</td>
                         </tr>
                         @endfor
@@ -615,11 +618,11 @@
                     <table class="table-bordered w-100">
                         <tr class="bg-gray"><th>KEGIATAN LAIN</th><th>PERSONIL</th><th>JAM KERJA</th></tr>
                         @php $otherActs = $report->employeeLogs->where('category', 'lain')->values(); @endphp
-                        @for($k=0; $k<3; $k++)
+                        @for($k=0; $k<5; $k++)
                         <tr>
                             <td style="height: 12px;">{{ isset($otherActs[$k]) ? $otherActs[$k]->description : '' }}</td>
                             <td>{{ isset($otherActs[$k]) ? $otherActs[$k]->name : '' }}</td>
-                            <td class="text-center">{{ isset($otherActs[$k]) ? $otherActs[$k]->time_in : '' }}</td>
+                            <td class="text-center">{{ isset($otherActs[$k]) ? $otherActs[$k]->work_time : '' }}</td>
                         </tr>
                         @endfor
                     </table>

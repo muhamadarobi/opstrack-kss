@@ -143,6 +143,60 @@
     .custom-option { padding: 10px 20px; font-size: 14px; color: var(--text-main); cursor: pointer; transition: background 0.2s; border-bottom: 1px solid transparent; }
     .custom-option.selected { background-color: var(--hover-bg); color: var(--orange-kss); }
     .custom-option:hover { background-color: var(--orange-kss); color: var(--white-color); }
+
+    /* --- ENHANCED ROW ACTIONS --- */
+    .btn-add-row-wrapper {
+        margin-top: 15px;
+        margin-bottom: 10px;
+        width: 100%;
+        padding: 0 20px; /* Added padding to prevent touching edges */
+        box-sizing: border-box; /* Ensure padding doesn't overflow width */
+    }
+
+    .btn-add-row {
+        background-color: transparent;
+        color: var(--blue-kss);
+        border: 1px dashed var(--blue-kss);
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .btn-add-row:hover {
+        background-color: rgba(0, 119, 194, 0.05);
+        border-style: solid;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 119, 194, 0.1);
+    }
+
+    .btn-delete-row {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: transparent;
+        border: 1px solid transparent;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-delete-row:hover {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: var(--redcolor);
+        border-color: rgba(220, 53, 69, 0.2);
+        transform: scale(1.05);
+    }
 </style>
 @endpush
 
@@ -233,7 +287,96 @@
         });
     }
 
-    // --- LOGIC AUTO FILL EMPLOYEE (SHIFT) ---
+    // --- LOGIC ADD/REMOVE SHIFT ROW ---
+    let shiftRowCount = 0;
+
+    function addShiftRow(nameVal = '', timeInVal = '', timeOutVal = '') {
+        const tbody = document.getElementById('shift-table-body');
+        if (!tbody) return;
+
+        shiftRowCount++;
+
+        const tr = document.createElement('tr');
+        // Added style="width: 1%; white-space: nowrap;" to the delete column for compactness
+        tr.innerHTML = `
+            <td class="text-center align-middle row-num">${shiftRowCount}</td>
+            <td><input type="text" class="form-control" name="shift_nama_${shiftRowCount}" value="${nameVal}"></td>
+            <td><input type="text" class="form-control flatpickr-time" name="shift_masuk_${shiftRowCount}" placeholder="00:00" value="${timeInVal}"></td>
+            <td><input type="text" class="form-control flatpickr-time" name="shift_pulang_${shiftRowCount}" placeholder="00:00" value="${timeOutVal}"></td>
+            <td><input type="text" class="form-control" name="shift_ket_${shiftRowCount}" placeholder="Keterangan"></td>
+            <td class="align-middle" style="width: 1%; white-space: nowrap;">
+                <div class="d-flex justify-content-center">
+                    <button type="button" class="btn-delete-row" onclick="removeShiftRow(this)" title="Hapus Baris">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+        initFlatpickrOnElement(tr);
+        reindexShiftRows();
+    }
+
+    function removeShiftRow(btn) {
+        const tbody = document.getElementById('shift-table-body');
+        if (tbody.children.length > 1) {
+            btn.closest('tr').remove();
+            reindexShiftRows();
+        } else {
+            // Jika tinggal 1 baris, hanya kosongkan valuenya
+            const row = btn.closest('tr');
+            row.querySelectorAll('input').forEach(input => input.value = '');
+        }
+    }
+
+    function reindexShiftRows() {
+        const tbody = document.getElementById('shift-table-body');
+        if (!tbody) return;
+
+        const rows = tbody.querySelectorAll('tr');
+        shiftRowCount = rows.length;
+
+        rows.forEach((row, index) => {
+            const num = index + 1;
+            row.querySelector('.row-num').textContent = num;
+
+            // Update name attributes untuk memastikan urutan benar saat submit
+            const inputs = row.querySelectorAll('input');
+            inputs.forEach(input => {
+                const nameParts = input.name.split('_');
+                // Asumsi format name: shift_nama_1, shift_masuk_1, dst. (bagian terakhir adalah nomor)
+                if (nameParts.length > 0) {
+                    nameParts[nameParts.length - 1] = num;
+                    input.name = nameParts.join('_');
+                }
+            });
+        });
+    }
+
+    // Helper untuk Inject tombol Add di bawah tabel shift jika belum ada
+    function injectAddShiftButton() {
+        const tableBody = document.getElementById('shift-table-body');
+        if (!tableBody) return;
+
+        const table = tableBody.closest('table');
+        if (!table) return;
+
+        // Cek apakah tombol sudah ada setelah tabel
+        if (table.nextElementSibling && table.nextElementSibling.classList.contains('btn-add-row-wrapper')) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'btn-add-row-wrapper';
+        wrapper.innerHTML = `
+            <button type="button" class="btn-add-row" onclick="addShiftRow()">
+                <i class="fa-solid fa-plus-circle"></i> Tambah Karyawan Lainnya
+            </button>
+        `;
+
+        table.parentNode.insertBefore(wrapper, table.nextSibling);
+    }
+
+    // --- LOGIC AUTO FILL EMPLOYEE (SHIFT) [MODIFIED] ---
     function autoFillEmployees() {
         const groupSelect = document.getElementById('group_name');
         const timeRangeSelect = document.getElementById('time_range');
@@ -269,37 +412,28 @@
             });
         }
 
-        const rowCount = employees.length > 0 ? employees.length : 14;
+        // Reset Tabel
         shiftBody.innerHTML = '';
+        shiftRowCount = 0;
 
-        let htmlContent = '';
-        for (let i = 1; i <= rowCount; i++) {
-            const employee = employees[i - 1];
-            let valNama = '';
-            let valMasuk = '';
-            let valPulang = '';
-
-            if (employee) {
-                valNama = employee.name;
+        // Jika ada karyawan di grup, masukkan. Jika tidak, buat baris kosong default.
+        if (employees.length > 0) {
+            employees.forEach(emp => {
+                let valMasuk = '';
+                let valPulang = '';
                 if(selectedTimeRange) {
                     valMasuk = timeIn;
                     valPulang = timeOut;
                 }
-            }
-
-            htmlContent += `
-                <tr>
-                    <td class="text-center">${i}</td>
-                    <td><input type="text" class="form-control" name="shift_nama_${i}" value="${valNama}"></td>
-                    <td><input type="text" class="form-control flatpickr-time" name="shift_masuk_${i}" placeholder="00:00" value="${valMasuk}"></td>
-                    <td><input type="text" class="form-control flatpickr-time" name="shift_pulang_${i}" placeholder="00:00" value="${valPulang}"></td>
-                    <td><input type="text" class="form-control" name="shift_ket_${i}" placeholder="Keterangan"></td>
-                </tr>
-            `;
+                addShiftRow(emp.name, valMasuk, valPulang);
+            });
+        } else {
+            // Default 1 baris kosong jika tidak ada data
+            addShiftRow('', timeIn, timeOut);
         }
-        shiftBody.innerHTML = htmlContent;
-        initFlatpickrOnElement(shiftBody);
-        shiftBody.querySelectorAll('select').forEach(sel => setupCustomSelects(sel));
+
+        // Pastikan tombol tambah muncul
+        injectAddShiftButton();
     }
 
     // --- LOGIC AUTO FILL OP.7 EMPLOYEES [MODIFIED] ---
@@ -1028,13 +1162,13 @@
     // --- GUDANG KARYAWAN LOGIC ---
     function renderKaryawanTables() {
         const operasiBody = document.getElementById('operasi-table-body');
-        for (let i = 1; i <= 7; i++) {
-            operasiBody.innerHTML += `<tr><td>${i}</td><td><input type="text" class="form-control" name="lembur_${i}" placeholder="Nama Karyawan"></td><td>${i + 7}</td><td><input type="text" class="form-control" name="relief_${i + 7}" placeholder="Nama Karyawan"></td></tr>`;
+        for (let i = 1; i <= 15; i++) {
+            operasiBody.innerHTML += `<tr><td>${i}</td><td><input type="text" class="form-control" name="lembur_${i}" placeholder="Nama Karyawan"></td><td>${i + 15}</td><td><input type="text" class="form-control" name="relief_${i + 15}" placeholder="Nama Karyawan"></td></tr>`;
         }
 
         const lainBody = document.getElementById('lain-table-body');
         for (let i = 1; i <= 5; i++) {
-            lainBody.innerHTML += `<tr><td><textarea class="form-control" name="kegiatan_desc_${i}" placeholder="Deskripsi kegiatan..."></textarea></td><td><input type="text" class="form-control" name="kegiatan_personil_${i}"></td><td><input type="text" class="form-control flatpickr-time" name="kegiatan_jam_${i}" placeholder="00:00"></td></tr>`;
+            lainBody.innerHTML += `<tr><td><textarea class="form-control" name="kegiatan_desc_${i}" placeholder="Deskripsi kegiatan..."></textarea></td><td><input type="text" class="form-control" name="kegiatan_personil_${i}"></td><td><input type="text" class="form-control text-center" name="kegiatan_jam_${i}" placeholder="00:00 - 00:00"></td></tr>`;
         }
 
         // --- RENDER PENGGANTI ---
@@ -1051,6 +1185,7 @@
         if(!tbody) return;
         op7RowCount++;
         const tr = document.createElement('tr');
+        // Added style="width: 1%; white-space: nowrap;" to the delete column for compactness
         tr.innerHTML = `
             <td class="text-center align-middle">${op7RowCount}</td>
             <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][name]" value="${nameVal}" placeholder="Nama"></td>
@@ -1059,7 +1194,13 @@
             <td><input type="text" class="form-control flatpickr-time" name="op7_logs[${op7RowCount}][time_in]" placeholder="00:00" value="${timeInVal}"></td>
             <td><input type="text" class="form-control flatpickr-time" name="op7_logs[${op7RowCount}][time_out]" placeholder="00:00" value="${timeOutVal}"></td>
             <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][description]" placeholder="Keterangan"></td>
-            <td class="align-middle text-center"><i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--redcolor);" onclick="this.closest('tr').remove()"></i></td>
+            <td class="align-middle text-center" style="width: 1%; white-space: nowrap;">
+                <div class="d-flex justify-content-center">
+                    <button type="button" class="btn-delete-row" onclick="this.closest('tr').remove()" title="Hapus Baris">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </div>
+            </td>
         `;
         tbody.appendChild(tr);
         initFlatpickrOnElement(tr);
@@ -1072,6 +1213,7 @@
         if(!tbody) return;
         replacementRowCount++;
         const tr = document.createElement('tr');
+        // Added style="width: 1%; white-space: nowrap;" to the delete column for compactness
         tr.innerHTML = `
             <td class="text-center align-middle">${replacementRowCount}</td>
             <td><input type="text" class="form-control" name="replacement_logs[${replacementRowCount}][name]" placeholder="Nama"></td>
@@ -1080,7 +1222,13 @@
             <td><input type="text" class="form-control flatpickr-time" name="replacement_logs[${replacementRowCount}][time_in]" placeholder="00:00"></td>
             <td><input type="text" class="form-control flatpickr-time" name="replacement_logs[${replacementRowCount}][time_out]" placeholder="00:00"></td>
             <td><input type="text" class="form-control" name="replacement_logs[${replacementRowCount}][description]" placeholder="Ket."></td>
-            <td class="align-middle text-center"><i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--redcolor);" onclick="this.closest('tr').remove()"></i></td>
+            <td class="align-middle text-center" style="width: 1%; white-space: nowrap;">
+                <div class="d-flex justify-content-center">
+                    <button type="button" class="btn-delete-row" onclick="this.closest('tr').remove()" title="Hapus Baris">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </div>
+            </td>
         `;
         tbody.appendChild(tr);
         initFlatpickrOnElement(tr);

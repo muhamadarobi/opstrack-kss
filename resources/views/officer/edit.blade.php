@@ -2,7 +2,7 @@
 
 @push('styles')
 <style>
-    /* Menggunakan style yang sama persis dengan create.blade.php */
+    /* --- TOAST NOTIFICATION (Floating Card) --- */
     .toast-container-fixed { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 15px; pointer-events: none; }
     .toast-card { background-color: var(--bg-card); border-radius: 12px; padding: 16px 20px; min-width: 320px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); display: flex; align-items: flex-start; gap: 15px; border-left: 6px solid; pointer-events: auto; animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s ease 4.5s forwards; position: relative; overflow: hidden; }
     .toast-card.success { border-left-color: var(--green); }
@@ -45,6 +45,60 @@
     .custom-option { padding: 10px 20px; font-size: 14px; color: var(--text-main); cursor: pointer; transition: background 0.2s; border-bottom: 1px solid transparent; }
     .custom-option.selected { background-color: var(--hover-bg); color: var(--orange-kss); }
     .custom-option:hover { background-color: var(--orange-kss); color: var(--white-color); }
+
+    /* --- ENHANCED ROW ACTIONS --- */
+    .btn-add-row-wrapper {
+        margin-top: 15px;
+        margin-bottom: 10px;
+        width: 100%;
+        padding: 0 20px;
+        box-sizing: border-box;
+    }
+
+    .btn-add-row {
+        background-color: transparent;
+        color: var(--blue-kss);
+        border: 1px dashed var(--blue-kss);
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .btn-add-row:hover {
+        background-color: rgba(0, 119, 194, 0.05);
+        border-style: solid;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 119, 194, 0.1);
+    }
+
+    .btn-delete-row {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: transparent;
+        border: 1px solid transparent;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-delete-row:hover {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: var(--redcolor);
+        border-color: rgba(220, 53, 69, 0.2);
+        transform: scale(1.05);
+    }
 </style>
 @endpush
 
@@ -104,26 +158,28 @@
         element.querySelectorAll(".flatpickr-datetime").forEach(el => flatpickr(el, { enableTime: true, dateFormat: "Y-m-d H:i", altInput: true, altFormat: "j F Y, H:i", time_24hr: true, disableMobile: false, allowInput: true, locale: "id", defaultDate: "{{ \Carbon\Carbon::now('Asia/Makassar')->format('Y-m-d') }}" }));
     }
 
-    function checkShiftAttendance(selectElement, index) {
-        if (selectElement.value === "Tidak Masuk") {
-            const inputMasuk = document.querySelector(`input[name="shift_masuk_${index}"]`);
-            const inputPulang = document.querySelector(`input[name="shift_pulang_${index}"]`);
-            if (inputMasuk) inputMasuk.value = "";
-            if (inputPulang) inputPulang.value = "";
-        }
+    // --- GENERIC BUTTON INJECTOR FOR ALL SECTIONS ---
+    function injectAddButton(tableBodyId, onClickFunctionName, buttonText) {
+        const tableBody = document.getElementById(tableBodyId);
+        if (!tableBody) return;
+
+        const table = tableBody.closest('table');
+        if (!table) return;
+
+        // Cek apakah tombol sudah ada setelah tabel
+        if (table.nextElementSibling && table.nextElementSibling.classList.contains('btn-add-row-wrapper')) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'btn-add-row-wrapper';
+        wrapper.innerHTML = `
+            <button type="button" class="btn-add-row" onclick="${onClickFunctionName}()">
+                <i class="fa-solid fa-plus-circle"></i> ${buttonText}
+            </button>
+        `;
+
+        table.parentNode.insertBefore(wrapper, table.nextSibling);
     }
 
-    function checkOp7Attendance(selectElement) {
-        if (selectElement.value === "Tidak Hadir") {
-            const row = selectElement.closest('tr');
-            if (row) {
-                const timeIn = row.querySelector('input[name*="[time_in]"]');
-                const timeOut = row.querySelector('input[name*="[time_out]"]');
-                if (timeIn) timeIn.value = "";
-                if (timeOut) timeOut.value = "";
-            }
-        }
-    }
 
     // --- AUTO SELECT TIME RANGE ---
     function autoSelectTimeRange() {
@@ -470,10 +526,10 @@
     function addBahanRow(data = null) {
         bahanRowCount++;
         const tr = document.createElement('tr');
-        const valType = data ? data.raw_material_type : '';
-        const valCurr = data ? data.qty_current : '';
-        const valPrev = data ? data.qty_prev : '';
-        const valTotal = data ? data.qty_total : '';
+        const valType = (data && data.raw_material_type) ? data.raw_material_type : '';
+        const valCurr = (data && data.qty_current) ? data.qty_current : '';
+        const valPrev = (data && data.qty_prev) ? data.qty_prev : '';
+        const valTotal = (data && data.qty_total) ? data.qty_total : '';
 
         tr.innerHTML = `
             <td class="align-middle row-num">${bahanRowCount}</td>
@@ -503,11 +559,11 @@
     function addContainerRow(data = null) {
         containerRowCount++;
         const tr = document.createElement('tr');
-        const valTime = data ? data.time : '';
-        const valCurr = data ? data.qty_current : '';
-        const valPrev = data ? data.qty_prev : '';
-        const valTotal = data ? data.qty_total : '';
-        const valStatus = data ? data.status : '';
+        const valTime = (data && data.time) ? data.time : '';
+        const valCurr = (data && data.qty_current) ? data.qty_current : '';
+        const valPrev = (data && data.qty_prev) ? data.qty_prev : '';
+        const valTotal = (data && data.qty_total) ? data.qty_total : '';
+        const valStatus = (data && data.status) ? data.status : '';
 
         tr.innerHTML = `
             <td class="align-middle row-num">${containerRowCount}</td>
@@ -546,8 +602,13 @@
         let name = '', doSo = '', cap = '', mark = '', curr = '', prev = '', accum = '';
 
         if (dbData) {
-            name = dbData.truck_name || ''; doSo = dbData.do_so_number || ''; cap = dbData.capacity || '';
-            mark = dbData.marking_type || ''; curr = dbData.qty_current || ''; prev = dbData.qty_prev || ''; accum = dbData.qty_accumulated || '';
+            name = (dbData.truck_name) ? dbData.truck_name : '';
+            doSo = (dbData.do_so_number) ? dbData.do_so_number : '';
+            cap = (dbData.capacity !== null && dbData.capacity !== undefined) ? dbData.capacity : '';
+            mark = (dbData.marking_type) ? dbData.marking_type : '';
+            curr = (dbData.qty_current !== null && dbData.qty_current !== undefined) ? dbData.qty_current : '';
+            prev = (dbData.qty_prev !== null && dbData.qty_prev !== undefined) ? dbData.qty_prev : '';
+            accum = (dbData.qty_accumulated !== null && dbData.qty_accumulated !== undefined) ? dbData.qty_accumulated : '';
         } else if (initialData) {
             name = initialData.name;
         }
@@ -578,17 +639,87 @@
         });
     }
 
+    // --- SHIFT ROW LOGIC (ADDED) ---
+    let shiftRowCount = 0;
+
+    function addShiftRow(data = null) {
+        const tbody = document.getElementById('shift-table-body');
+        if (!tbody) return;
+
+        shiftRowCount++;
+
+        const tr = document.createElement('tr');
+        const valNama = (data && data.name) ? data.name : '';
+        const valMasuk = (data && data.time_in) ? data.time_in : '';
+        const valPulang = (data && data.time_out) ? data.time_out : '';
+        const valKet = (data && data.description) ? data.description : '';
+
+        tr.innerHTML = `
+            <td class="text-center align-middle row-num">${shiftRowCount}</td>
+            <td><input type="text" class="form-control" name="shift_nama_${shiftRowCount}" value="${valNama}"></td>
+            <td><input type="text" class="form-control flatpickr-time" name="shift_masuk_${shiftRowCount}" placeholder="00:00" value="${valMasuk}"></td>
+            <td><input type="text" class="form-control flatpickr-time" name="shift_pulang_${shiftRowCount}" placeholder="00:00" value="${valPulang}"></td>
+            <td><input type="text" class="form-control" name="shift_ket_${shiftRowCount}" value="${valKet}" placeholder="Keterangan"></td>
+            <td class="align-middle" style="width: 1%; white-space: nowrap;">
+                <div class="d-flex justify-content-center">
+                    <button type="button" class="btn-delete-row" onclick="removeShiftRow(this)" title="Hapus Baris">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+        initFlatpickrOnElement(tr);
+        reindexShiftRows();
+    }
+
+    function removeShiftRow(btn) {
+        const tbody = document.getElementById('shift-table-body');
+        if (tbody.children.length > 1) {
+            btn.closest('tr').remove();
+            reindexShiftRows();
+        } else {
+            // Jika tinggal 1 baris, hanya kosongkan valuenya
+            const row = btn.closest('tr');
+            row.querySelectorAll('input').forEach(input => input.value = '');
+        }
+    }
+
+    function reindexShiftRows() {
+        const tbody = document.getElementById('shift-table-body');
+        if (!tbody) return;
+
+        const rows = tbody.querySelectorAll('tr');
+        shiftRowCount = rows.length;
+
+        rows.forEach((row, index) => {
+            const num = index + 1;
+            row.querySelector('.row-num').textContent = num;
+
+            // Update name attributes untuk memastikan urutan benar saat submit
+            const inputs = row.querySelectorAll('input');
+            inputs.forEach(input => {
+                const nameParts = input.name.split('_');
+                if (nameParts.length > 0) {
+                    nameParts[nameParts.length - 1] = num;
+                    input.name = nameParts.join('_');
+                }
+            });
+        });
+    }
+
     let op7RowCount = 0;
     function addOp7Row(data = null) {
         const tbody = document.getElementById('op7-table-body');
         op7RowCount++;
         const tr = document.createElement('tr');
-        const name = data ? data.name : '';
-        const forklift = data ? data.no_forklift_ : '';
-        const area = data ? data.work_area : '';
-        const inTime = data ? data.time_in : '';
-        const outTime = data ? data.time_out : '';
-        const desc = data ? data.description : '';
+        const name = (data && data.name) ? data.name : '';
+        const forklift = (data && data.no_forklift_) ? data.no_forklift_ : '';
+        const area = (data && data.work_area) ? data.work_area : '';
+        const inTime = (data && data.time_in) ? data.time_in : '';
+        const outTime = (data && data.time_out) ? data.time_out : '';
+        const desc = (data && data.description) ? data.description : '';
 
         tr.innerHTML = `
             <td class="text-center align-middle">${op7RowCount}</td>
@@ -597,12 +728,7 @@
             <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][work_area]" value="${area}" placeholder="Area"></td>
             <td><input type="text" class="form-control flatpickr-time" name="op7_logs[${op7RowCount}][time_in]" value="${inTime}" placeholder="00:00"></td>
             <td><input type="text" class="form-control flatpickr-time" name="op7_logs[${op7RowCount}][time_out]" value="${outTime}" placeholder="00:00"></td>
-            <td>
-                <select class="form-select" name="op7_logs[${op7RowCount}][description]" onchange="checkOp7Attendance(this)">
-                    <option value=""></option>
-                    <option value="Tidak Hadir" ${desc === 'Tidak Hadir' ? 'selected' : ''}>Tidak Hadir</option>
-                </select>
-            </td>
+            <td><input type="text" class="form-control" name="op7_logs[${op7RowCount}][description]" value="${desc}" placeholder="Keterangan"></td>
             <td class="align-middle text-center"><i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--redcolor);" onclick="this.closest('tr').remove()"></i></td>
         `;
         tbody.appendChild(tr);
@@ -615,12 +741,12 @@
         const tbody = document.getElementById('replacement-table-body');
         replacementRowCount++;
         const tr = document.createElement('tr');
-        const name = data ? data.name : '';
-        const forklift = data ? data.no_forklift_ : '';
-        const area = data ? data.work_area : '';
-        const inTime = data ? data.time_in : '';
-        const outTime = data ? data.time_out : '';
-        const desc = data ? data.description : '';
+        const name = (data && data.name) ? data.name : '';
+        const forklift = (data && data.no_forklift_) ? data.no_forklift_ : '';
+        const area = (data && data.work_area) ? data.work_area : '';
+        const inTime = (data && data.time_in) ? data.time_in : '';
+        const outTime = (data && data.time_out) ? data.time_out : '';
+        const desc = (data && data.description) ? data.description : '';
 
         tr.innerHTML = `
             <td class="text-center align-middle">${replacementRowCount}</td>
@@ -766,11 +892,11 @@
                 // --- FIX: Gunakan selector name, bukan ID, karena input tiba/sandar tidak memiliki ID ---
                 const arrivalEl = document.querySelector(`[name="arrival_time_${seq}"]`);
                 if(arrivalEl) {
-                     if(arrivalEl._flatpickr) {
-                         arrivalEl._flatpickr.setDate(act.arrival_time, true);
-                     } else {
-                         arrivalEl.value = act.arrival_time;
-                     }
+                      if(arrivalEl._flatpickr) {
+                          arrivalEl._flatpickr.setDate(act.arrival_time, true);
+                      } else {
+                          arrivalEl.value = act.arrival_time;
+                      }
                 }
 
                 ['delivery', 'loading', 'damage'].forEach(type => {
@@ -865,7 +991,7 @@
         vehicleBody.innerHTML = '';
         vehicleData.forEach((item, index) => {
             const log = reportData.unit_check_logs ? reportData.unit_check_logs.find(l => l.category === 'vehicle' && l.master_id == item.id) : null;
-            const fuel = log ? log.fuel_level : '';
+            const fuel = log && log.fuel_level ? log.fuel_level : '';
             const rec = log ? log.condition_received : '';
             const hand = log ? log.condition_handed_over : '';
             vehicleBody.innerHTML += `<tr><td class="text-center">${index + 1}</td><td>${item.name}<input type="hidden" name="unit_logs[${index}][master_unit_id]" value="${item.id}"></td><td><input type="number" step="any" name="unit_logs[${index}][fuel_level]" class="form-control" placeholder="0" value="${fuel}"></td><td><select name="unit_logs[${index}][condition_received]" class="form-select status-select"><option value="" disabled ${!rec?'selected':''}>-</option><option value="Baik" ${rec=='Baik'?'selected':''}>Baik</option><option value="Rusak" ${rec=='Rusak'?'selected':''}>Rusak</option></select></td><td><select name="unit_logs[${index}][condition_handed_over]" class="form-select status-select"><option value="" disabled ${!hand?'selected':''}>-</option><option value="Baik" ${hand=='Baik'?'selected':''}>Baik</option><option value="Rusak" ${hand=='Rusak'?'selected':''}>Rusak</option></select></td></tr>`;
@@ -875,7 +1001,7 @@
         inventoryBody.innerHTML = '';
         inventoryData.forEach((item, index) => {
             const log = reportData.unit_check_logs ? reportData.unit_check_logs.find(l => l.category === 'inventory' && l.master_id == item.id) : null;
-            const qty = log ? log.quantity : (item.qty || 1);
+            const qty = log && log.quantity ? log.quantity : (item.qty || 1);
             const rec = log ? log.condition_received : '';
             const hand = log ? log.condition_handed_over : '';
             inventoryBody.innerHTML += `<tr><td class="text-center">${index + 1}</td><td>${item.name}<input type="hidden" name="inventory_logs[${index}][master_inventory_item_id]" value="${item.id}"></td><td><input type="number" step="any" name="inventory_logs[${index}][quantity]" class="form-control" value="${qty}"></td><td><select name="inventory_logs[${index}][condition_received]" class="form-select status-select"><option value="" disabled ${!rec?'selected':''}>-</option><option value="Baik" ${rec=='Baik'?'selected':''}>Baik</option><option value="Rusak" ${rec=='Rusak'?'selected':''}>Rusak</option></select></td><td><select name="inventory_logs[${index}][condition_handed_over]" class="form-select status-select"><option value="" disabled ${!hand?'selected':''}>-</option><option value="Baik" ${hand=='Baik'?'selected':''}>Baik</option><option value="Rusak" ${hand=='Rusak'?'selected':''}>Rusak</option></select></td></tr>`;
@@ -898,25 +1024,28 @@
 
         // 7. Employees
         const shiftBody = document.getElementById('shift-table-body');
-        shiftBody.innerHTML = '';
+        shiftBody.innerHTML = ''; shiftRowCount = 0;
         const shiftLogs = reportData.employee_logs ? reportData.employee_logs.filter(l => l.category === 'shift') : [];
-        for (let i = 1; i <= 14; i++) {
-             const log = shiftLogs[i-1] || null;
-             const valNama = log ? log.name : '';
-             const valMasuk = log ? log.time_in : '';
-             const valPulang = log ? log.time_out : '';
-             const valKet = log ? log.description : '';
-             shiftBody.innerHTML += `<tr><td class="text-center">${i}</td><td><input type="text" class="form-control" name="shift_nama_${i}" value="${valNama}"></td><td><input type="text" class="form-control flatpickr-time" name="shift_masuk_${i}" placeholder="00:00" value="${valMasuk}"></td><td><input type="text" class="form-control flatpickr-time" name="shift_pulang_${i}" placeholder="00:00" value="${valPulang}"></td><td><select class="form-select" name="shift_ket_${i}" onchange="checkShiftAttendance(this, ${i})"><option value=""></option><option value="Tidak Masuk" ${valKet=='Tidak Masuk'?'selected':''}>Tidak Masuk</option></select></td></tr>`;
+        if (shiftLogs.length > 0) {
+            shiftLogs.forEach(log => addShiftRow(log));
+        } else {
+            // Default 1 empty row if no data
+            addShiftRow();
         }
-        initFlatpickrOnElement(shiftBody);
+        // Inject button for Shift
+        injectAddButton('shift-table-body', 'addShiftRow', 'Tambah Karyawan Lainnya');
 
         const operasiBody = document.getElementById('operasi-table-body');
         operasiBody.innerHTML = '';
         const opLogs = reportData.employee_logs ? reportData.employee_logs.filter(l => l.category === 'operasi') : [];
-        for (let i = 1; i <= 7; i++) {
+        for (let i = 1; i <= 15; i++) {
             const lemburLog = opLogs.filter(l => l.description === 'Lembur')[i-1];
             const reliefLog = opLogs.filter(l => l.description === 'Relief Malam')[i-1];
-            operasiBody.innerHTML += `<tr><td>${i}</td><td><input type="text" class="form-control" name="lembur_${i}" placeholder="Nama Karyawan" value="${lemburLog?lemburLog.name:''}"></td><td>${i + 7}</td><td><input type="text" class="form-control" name="relief_${i + 7}" placeholder="Nama Karyawan" value="${reliefLog?reliefLog.name:''}"></td></tr>`;
+
+            const valLembur = (lemburLog && lemburLog.name) ? lemburLog.name : '';
+            const valRelief = (reliefLog && reliefLog.name) ? reliefLog.name : '';
+
+            operasiBody.innerHTML += `<tr><td>${i}</td><td><input type="text" class="form-control" name="lembur_${i}" placeholder="Nama Karyawan" value="${valLembur}"></td><td>${i + 15}</td><td><input type="text" class="form-control" name="relief_${i + 15}" placeholder="Nama Karyawan" value="${valRelief}"></td></tr>`;
         }
 
         const lainBody = document.getElementById('lain-table-body');
@@ -924,7 +1053,11 @@
         const lainLogs = reportData.employee_logs ? reportData.employee_logs.filter(l => l.category === 'lain') : [];
         for (let i = 1; i <= 5; i++) {
             const log = lainLogs[i-1];
-            lainBody.innerHTML += `<tr><td><textarea class="form-control" name="kegiatan_desc_${i}" placeholder="Deskripsi kegiatan...">${log?log.description:''}</textarea></td><td><input type="text" class="form-control" name="kegiatan_personil_${i}" value="${log?log.name:''}"></td><td><input type="text" class="form-control flatpickr-time" name="kegiatan_jam_${i}" placeholder="00:00" value="${log?log.time_in:''}"></td></tr>`;
+            const valDesc = (log && log.description) ? log.description : '';
+            const valName = (log && log.name) ? log.name : '';
+            const valTime = (log && log.time_in) ? log.time_in : '';
+
+            lainBody.innerHTML += `<tr><td><textarea class="form-control" name="kegiatan_desc_${i}" placeholder="Deskripsi kegiatan...">${valDesc}</textarea></td><td><input type="text" class="form-control" name="kegiatan_personil_${i}" value="${valName}"></td><td><input type="text" class="form-control" name="kegiatan_jam_${i}" placeholder="00:00 - 00:00" value="${valTime}"></td></tr>`;
         }
         initFlatpickrOnElement(lainBody);
 

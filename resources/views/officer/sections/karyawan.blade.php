@@ -29,7 +29,7 @@
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th colspan="5" style="font-size: 14px; background-color: var(--green);">KARYAWAN SHIFT YANG BERTUGAS</th>
+                                <th colspan="6" style="font-size: 14px; background-color: var(--green);">KARYAWAN SHIFT YANG BERTUGAS</th>
                             </tr>
                             <tr>
                                 <th style="width: 60px;">NO.</th>
@@ -37,6 +37,7 @@
                                 <th style="width: 150px;">MASUK</th>
                                 <th style="width: 150px;">PULANG</th>
                                 <th style="width: 200px;">KET</th>
+                                <th style="width: 1%;"><i class="fa-solid fa-trash-can"></i></th>
                             </tr>
                         </thead>
                         <tbody id="shift-table-body"></tbody>

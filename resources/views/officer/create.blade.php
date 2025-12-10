@@ -965,7 +965,13 @@
             const prevInput = document.querySelector(`input[name="qty_${type}_prev_${suffix}"]`);
             const accumSpan = document.querySelector(`.qty_${type}_accumulated_${suffix}`);
             if(currentInput && prevInput && accumSpan) {
-                const calculate = () => { accumSpan.textContent = (parseFloat(currentInput.value)||0) + (parseFloat(prevInput.value)||0); };
+                const calculate = () => {
+                    const valCurrent = parseFloat(currentInput.value) || 0;
+                    const valPrev = parseFloat(prevInput.value) || 0;
+                    const total = valCurrent + valPrev;
+                    // Menggunakan toFixed(2) untuk membatasi desimal, lalu parseFloat untuk menghilangkan trailing zeros (misal 10.50 jadi 10.5)
+                    accumSpan.textContent = parseFloat(total.toFixed(2));
+                };
                 currentInput.addEventListener('input', calculate);
                 prevInput.addEventListener('input', calculate);
             }

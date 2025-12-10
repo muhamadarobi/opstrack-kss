@@ -411,8 +411,12 @@
                                 <option value="" disabled selected>Pilih Tipe...</option>
                                 <option value="Forklift">Forklift</option>
                                 <option value="Excavator">Excavator</option>
-                                <option value="Dozer">Dozer</option>
-                                <option value="Crane">Crane</option>
+                                <option value="Trailer">Trailer</option>
+                                <option value="Tronton">Tronton</option>
+                                <option value="Dump Truck">Dump Truck</option>
+                                <option value="Wheel Loader">Wheel Loader</option>
+                                <option value="Pick Up">Pick Up</option>
+                                <option value="Bus">Bus</option>
                             </select>
                         </div>
                         <button type="submit" class="btn-submit-modal">Simpan Unit</button>
@@ -551,8 +555,12 @@
                             <select class="form-select" name="type" id="editUnitType" required>
                                 <option value="Forklift">Forklift</option>
                                 <option value="Excavator">Excavator</option>
-                                <option value="Dozer">Dozer</option>
-                                <option value="Crane">Crane</option>
+                                <option value="Trailer">Trailer</option>
+                                <option value="Tronton">Tronton</option>
+                                <option value="Dump Truck">Dump Truck</option>
+                                <option value="Wheel Loader">Wheel Loader</option>
+                                <option value="Pick Up">Pick Up</option>
+                                <option value="Bus">Bus</option>
                             </select>
                         </div>
                         <button type="submit" class="btn-submit-modal">Simpan Perubahan</button>

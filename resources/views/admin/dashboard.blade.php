@@ -343,6 +343,170 @@
         70% { box-shadow: 0 0 0 15px rgba(22, 163, 74, 0); }
         100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
     }
+
+    /* ========================================= */
+    /* ===  ANIMASI SIGNATURE SUCCESS OVERLAY === */
+    /* ========================================= */
+    #success-animation-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.85); /* Slightly darker */
+        backdrop-filter: blur(8px);
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s ease;
+    }
+
+    #success-animation-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .success-anim-container {
+        position: relative;
+        text-align: center;
+        transform: scale(0.8);
+        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bounce effect */
+    }
+    #success-animation-overlay.active .success-anim-container {
+        transform: scale(1);
+    }
+
+    /* Document Icon CSS Shape */
+    .doc-anim-icon {
+        width: 140px;
+        height: 190px;
+        background-color: #fff;
+        border-radius: 12px;
+        position: relative;
+        margin: 0 auto 30px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+        padding: 25px;
+        gap: 15px;
+        overflow: hidden;
+        transition: box-shadow 0.3s ease;
+    }
+
+    /* Glow effect on document when stamped */
+    .doc-anim-icon.glowing {
+        box-shadow: 0 0 30px rgba(22, 163, 74, 0.6), 0 20px 50px rgba(0,0,0,0.4);
+        border: 2px solid rgba(22, 163, 74, 0.3);
+    }
+
+    /* Lines inside document */
+    .doc-line { height: 5px; background: #e2e8f0; border-radius: 3px; width: 100%; }
+    .doc-line.short { width: 60%; }
+    .doc-line.header { height: 10px; width: 40%; background: #94a3b8; margin-bottom: 10px; }
+
+    /* Signature SVG */
+    .signature-svg {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 130px;
+        height: 90px;
+        z-index: 10;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+    }
+
+    .signature-path {
+        fill: none;
+        stroke: #16a34a; /* Green Signature */
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 500; /* Panjang garis estimasi */
+        stroke-dashoffset: 500; /* Mulai dalam keadaan tersembunyi */
+    }
+
+    /* Animasi Drawing Signature */
+    .signature-svg.animate .signature-path {
+        animation: signDoc 1.2s ease-in-out forwards 0.2s;
+    }
+
+    @keyframes signDoc {
+        to { stroke-dashoffset: 0; }
+    }
+
+    /* --- STAMP EFFECT --- */
+    .stamp-box {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        /* Start state: Big and invisible */
+        transform: translate(-50%, -50%) rotate(-15deg) scale(3);
+        border: 4px solid #16a34a; /* Green Border */
+        color: #16a34a;
+        padding: 8px 15px;
+        font-weight: 800;
+        font-size: 24px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0;
+        border-radius: 8px;
+        z-index: 20;
+        pointer-events: none;
+        background-color: rgba(255, 255, 255, 0.8); /* Semi transparent bg */
+        box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+    }
+
+    .stamp-box.stamped {
+        animation: stamp-slam 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes stamp-slam {
+        0% { opacity: 0; transform: translate(-50%, -50%) rotate(-15deg) scale(3); }
+        100% { opacity: 1; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
+    }
+
+    /* --- CONFETTI / PARTICLES --- */
+    .confetti-container {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 15;
+    }
+    .particle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        opacity: 0;
+    }
+    /* Keyframes for particles defined in JS mostly, but simple float here */
+    @keyframes floatUp {
+        0% { transform: translateY(0) scale(1); opacity: 1; }
+        100% { transform: translateY(-100px) scale(0); opacity: 0; }
+    }
+
+    .success-text-anim {
+        color: white;
+        font-size: 26px;
+        font-weight: 700;
+        margin-top: 25px;
+        opacity: 0;
+        transform: translateY(20px);
+        text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    #success-animation-overlay.active .success-text-anim {
+        animation: fadeInUp 0.5s ease forwards 1.2s;
+    }
+
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
 @endpush
 
@@ -498,7 +662,7 @@
 
                                     <!-- 1. Tombol Review & Print -->
                                     <!-- Menambahkan onclick untuk memanggil fungsi printPdf() -->
-                                    <a href="{{ route('admin.report.view', $report->id) }}"
+                                    <a href="{{ route('admin.report.show', $report->id) }}"
                                        target="_blank"
                                        class="btn-review-custom"
                                        title="Lihat & Cetak Dokumen">
@@ -535,6 +699,33 @@
 
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- HTML UNTUK ANIMASI OVERLAY (HIDDEN DEFAULT) -->
+    <div id="success-animation-overlay">
+        <div class="success-anim-container">
+            <!-- Confetti Container -->
+            <div class="confetti-container"></div>
+
+            <div class="doc-anim-icon">
+                <div class="doc-line header"></div>
+                <div class="doc-line"></div>
+                <div class="doc-line"></div>
+                <div class="doc-line short"></div>
+                <div class="doc-line"></div>
+
+                <!-- STAMP ELEMENT -->
+                <div class="stamp-box">SIGNED</div>
+            </div>
+
+            <!-- SVG Signature Path -->
+            <svg class="signature-svg" viewBox="0 0 150 80">
+                <!-- Jalur SVG simulasi tanda tangan -->
+                <path class="signature-path" d="M10,50 C30,40 40,60 50,45 C60,30 55,60 70,50 C80,40 90,60 100,40 C110,20 120,70 140,40" />
+            </svg>
+
+            <div class="success-text-anim">Laporan Berhasil Ditandatangani!</div>
         </div>
     </div>
 
@@ -598,6 +789,35 @@
     document.addEventListener('DOMContentLoaded', function() {
         const triggers = document.querySelectorAll('.trigger-approve-modal');
         const modalEl = document.getElementById('approveModal');
+        const overlay = document.getElementById('success-animation-overlay');
+        const signatureSvg = document.querySelector('.signature-svg');
+        const stampElement = document.querySelector('.stamp-box');
+        const docIcon = document.querySelector('.doc-anim-icon');
+        const confettiContainer = document.querySelector('.confetti-container');
+
+        // --- Helper Function: Buat Confetti ---
+        function createConfetti() {
+            const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+
+            // Buat 30 partikel
+            for(let i=0; i<30; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+
+                // Random properties
+                const bgColor = colors[Math.floor(Math.random() * colors.length)];
+                const left = Math.random() * 100 + '%';
+                const animDuration = Math.random() * 1 + 0.5 + 's'; // 0.5s - 1.5s
+                const animDelay = Math.random() * 0.2 + 's';
+
+                particle.style.background = bgColor;
+                particle.style.left = left;
+                particle.style.top = '60%'; // Start from center-ish
+                particle.style.animation = `floatUp ${animDuration} ease-out ${animDelay} forwards`;
+
+                confettiContainer.appendChild(particle);
+            }
+        }
 
         if(modalEl) {
             const approveModal = new bootstrap.Modal(modalEl);
@@ -607,24 +827,7 @@
             const shiftEl = document.getElementById('modal-doc-shift');
             const dateEl = document.getElementById('modal-doc-date');
 
-            // --- ANIMASI TOMBOL LOADING SAAT SUBMIT ---
-            form.addEventListener('submit', function() {
-                const btn = this.querySelector('button[type="submit"]');
-                const cancelBtn = document.querySelector('.btn-modal-cancel');
-
-                // Ubah tampilan tombol saat submit
-                // Menggunakan fontawesome spinner
-                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i> Sedang Memproses PDF...';
-
-                // Styling agar terlihat disabled
-                btn.style.opacity = '0.8';
-                btn.style.cursor = 'wait';
-                btn.disabled = true;
-
-                // Disable tombol batal juga agar user tidak menutup modal
-                if(cancelBtn) cancelBtn.disabled = true;
-            });
-
+            // --- FUNGSI UPDATE DATA MODAL ---
             triggers.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
@@ -637,9 +840,92 @@
                     groupEl.textContent = 'Group ' + group;
                     shiftEl.textContent = shift;
                     dateEl.textContent = date;
-                    form.action = url;
+                    form.action = url; // Set action url untuk AJAX fetch
 
                     approveModal.show();
+                });
+            });
+
+            // --- ANIMASI TOMBOL LOADING & AJAX SUBMIT ---
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Mencegah reload halaman langsung
+
+                const btn = this.querySelector('button[type="submit"]');
+                const cancelBtn = document.querySelector('.btn-modal-cancel');
+                const originalText = btn.innerHTML;
+                const actionUrl = this.action;
+                const formData = new FormData(this);
+
+                // 1. UI Loading State
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i> Memproses...';
+                btn.style.opacity = '0.8';
+                btn.style.cursor = 'wait';
+                btn.disabled = true;
+                if(cancelBtn) cancelBtn.disabled = true;
+
+                // 2. Kirim Data via AJAX (Fetch)
+                fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // JIKA SUKSES:
+                        // A. Tutup Modal Approval
+                        approveModal.hide();
+
+                        // B. Munculkan Overlay & Reset State Animasi
+                        overlay.classList.add('active');
+                        stampElement.classList.remove('stamped');
+                        signatureSvg.classList.remove('animate');
+                        docIcon.classList.remove('glowing');
+                        confettiContainer.innerHTML = ''; // Clear old confetti
+
+                        // C. SEQUENCE ANIMATION
+
+                        // 1. Mulai Tanda Tangan (Delay 100ms)
+                        setTimeout(() => {
+                            signatureSvg.classList.add('animate');
+                        }, 100);
+
+                        // 2. Stempel "SIGNED" & Confetti (Delay 1.2s - setelah tanda tangan selesai)
+                        setTimeout(() => {
+                            stampElement.classList.add('stamped');
+                            docIcon.classList.add('glowing');
+                            createConfetti(); // Trigger partikel
+                        }, 1200);
+
+                        // D. Reload halaman (Delay Total 3.5s)
+                        setTimeout(() => {
+                            // Fade out overlay manual (opsional, krn reload)
+                            overlay.classList.remove('active');
+
+                            // Reload halaman
+                            window.location.reload();
+                        }, 3500);
+
+                    } else {
+                        // Jika Gagal (Server Error)
+                        alert('Terjadi kesalahan saat memproses dokumen. Silakan coba lagi.');
+                        // Reset tombol
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        if(cancelBtn) cancelBtn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.cursor = 'pointer';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Gagal menghubungi server.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    if(cancelBtn) cancelBtn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
                 });
             });
         }

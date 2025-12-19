@@ -57,7 +57,7 @@
                                 <th style="width: 60px;">NO.</th>
                                 <th>LEMBUR</th>
                                 <th style="width: 60px;">NO.</th>
-                                <th>RELIEF MALAM</th>
+                                <th>RELIEF SIANG/MALAM</th>
                             </tr>
                         </thead>
                         <tbody id="operasi-table-body"></tbody>

@@ -601,7 +601,7 @@
                 <td class="w-50" style="padding-left: 2px; vertical-align: top;">
                     <div class="text-center border-all bg-gray text-bold" style="border-bottom:none; padding: 1px;">KARYAWAN OPERASI</div>
                     <table class="table-bordered w-100 mb-2">
-                        <tr class="bg-gray"><th style="width: 15px;">NO.</th><th>LEMBUR</th><th style="width: 15px;">NO.</th><th>RELIEF MALAM</th></tr>
+                        <tr class="bg-gray"><th style="width: 15px;">NO.</th><th>LEMBUR</th><th style="width: 15px;">NO.</th><th>RELIEF SIANG/MALAM</th></tr>
                         @php
                             $lemburEmps = $report->employeeLogs->where('category', 'operasi')->where('description', 'Lembur')->values();
                             $reliefEmps = $report->employeeLogs->where('category', 'operasi')->where('description', 'Relief Malam')->values();

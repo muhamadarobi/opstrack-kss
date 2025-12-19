@@ -155,7 +155,7 @@ class AdminController extends Controller
             'containerActivity.items', 'turbaActivity.deliveries', 'unitCheckLogs', 'employeeLogs',
             'creator', 'receiver', 'approver'
         ])->findOrFail($id);
-        return view('officer.pdf', compact('report'));
+        return view('officer.viewpdf', compact('report'));
     }
 
     public function dokumen(Request $request) {
